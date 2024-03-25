@@ -1,3 +1,9 @@
+<style scoped>
+table {
+  font-family: Consolas;
+}
+</style>
+
 # TKOM 24L
 
 Mariusz Pakulski
@@ -46,7 +52,7 @@ x          # Gramatyka na to pozwala, wtedy nic się nie dzieje
   - znakowy ```String```, konkatenacja dwóch łańcuchów znakowych
   - logiczny ```Bool```, operacje logiczne
   - słownikowy ```Dict```, metody wywoływane po kropce
-  - specjalny ```Special```, przechowuje wartości null
+  - specjalny ```Null```, przechowuje wartości null
 
 |Typ        |Zmienna     |   Zakres  |
 |-----------|------------|-----------|
@@ -54,7 +60,8 @@ x          # Gramatyka na to pozwala, wtedy nic się nie dzieje
 |Double     |y = 10.5    | od 1.7\*10<sup>-308</sup> do 1.7\*10<sup>308</sup>|
 |String     |z = "string"| do 9\*10<sup>18</sup> znaków|
 |Bool       |t = true    | true \| false |
-|Special    |m = null    | null |
+|Null    |m = null    | null |
+|Dict       |n = Dict()  | -|
 
 Dalsze szczegóły związane z typami znajdują się w dalszej części dokumentacji.
 
@@ -78,18 +85,159 @@ if (true){
 ```
 if (true){a = 1}
 ```
+
+- #### instrukcje:
+    - warunkowa ```if``` z ```else```
+    - pętli ```while```
+    - sterujące ```return, break, continue```
+- #### obsługa operatorów:
+    - arytmetycznych ``` +,-,*,/,^ ```
+    - porównujących ```<,>,<=,>=,==,!=```
+    - logicznych ```||, &&, !```
+    - dostępu ```.```
+- #### leniwa tokenizacja
+- #### moduły:
+     - lekser (Rozpoznaje tokeny i przekazuje je do parsera)
+     - parser (Buduje drzewa składniowe i przekazuje je do interpretera)
+     - interpreter (Wykonuje kod na podstawie otrzymanych drzew składniowych, zarządza również błędami)
+- #### gramatyka bezkontekstowa (po prawej stronie reguł może występować wiele symboli nieterminalnych)
+- #### parser rekursywnie zstępujący (Drzewo wyprowadzenia jest budowane od korzenia do liści)
+- #### wypisywanie zmiennych
+
+W cudzysłowach znajduje się sformatowany tekst.
+Tekst w klamrach oznacza wyrażenie, a poza klamrami znaki do dosłownego wypisania (pomijając kwestie escapowania).
+Nawiasy klamrowe wyznaczają wartość wyrażenia, konwertują ją na string i wstawiają jego tekst w odpowiednie miejsce do sformatowanego tekstu instrukcji print.
+Realizuję typowanie silne, więc na zmiennych musi być wykonana jawna konwersja na Stringa.  <br/>
+Tą konwersje realizują nawiasy klamrowe.
+W przypadku chęci wypisania znaku klamry otwierającej lub cudzysłowu należy przed nim wstawić znak "\".
+
+### Poprawny zapis printa
+
+```
+print "" #
+```
+```
+a = 6.4
+b = 6.6
+c = -6.4
+d = -6.6
+
+print "{e} {f} {g} {h}" # 6 7 -6 -7
+```
+```
+a = 1
+b = 5
+c = "a"
+d = null
+print "{a}, {b}, {c}, {d}" # 1, 5, a, null
+```
+```
+a = 5
+print "\{a\} {a} \{{a}\}" # {a} 5 {5}
+```
+```
+a = 5
+print "\"\{{a}\}" # "{5}
+```
+
+```
+abc = "string"
+print "{abc}" # string
+```
+```
+a = 1
+b = "string"
+print "{a} \\\{{b}\" c"  # 1 \{string" c
+```
+```
+def print "{a, b}"{
+    print "{a}"
+}
+print "{1, 2}" # 1
+```
+
+### Niepoprawny zapis printa
+```
+6 print ""
+```
+```
+print
+```
+```
+6 + print ""
+```
+```
+print "{a\a}" # Nie można wykonać takiego escapowania. Jest to błędne wyrażenie.
+```
+
+```
+def print "{a, b}"{  # Programista może stworzyć funkcję print, ponieważ nie jest to zajęty identyfikator
+    return a
+}
+print "{print "{1, 2}"}" # 1
+```
+
+- #### możliwość definiowania własnych funkcji (wartość do funkcji przekazywana przez wartość)
+
+Zakładam, że można wywołać return w dowolnym miejscu w kodzie. Wtedy dalsza część funkcji nie będzie się wykonywała. <br/>
+Kiedy wywołamy return w głównej części programu to program się zakończy. <br/>
+Funkcja będzie mogła zwracać null, zakładamy, że nie można zwracać wielu elementów po przecinku z funkcji. <br/>
+Jeśli funkcja nic nie będzie zwracać, a będziemy chcieli coś z niej otrzymać to będziemy otrzymywać bład NoValueReturned
+
+```
+a = 5
+def fun(a){
+    a = a + 5
+    return 10
+}
+
+b = fun(a)
+print "{b}" # 10
+print "{a}" # 5
+```
+
+```
+a = 5
+return a # zostanie zwrócona wartość a i zakończy się program
+print "{a}" # nie zostanie wypisana wartość a
+```
+```
+def fun(a){
+    return a # zostanie zwrócona z funkcji wartość 1
+    print "{a} + 5" # nie zostanie wypisana wartość 6
+}
+print "{fun(1)}" # 1
+```
+```
+def fun(){
+    return null
+}
+
+print "{fun()}" # null
+```
+```
+x = 5
+def fun(a){
+    print "{a}"
+}
+
+fun(x)     # 5
+y = fun(x) # NoValueReturned: Function "fun" does not return a value in line 7, column 1
+```
+
 - #### rekurencja jest dozwolona
+
 ```
 def func(x)
 {
 	if(x > 10){
-        print(x) # 12 11
+        print "{x}" # 12 11
         func(x - 1)
 	}
 	return x
 }
 
-print(func(12)) # 12
+print "{func(12)}" # 12
 ```
 
 ```
@@ -97,12 +245,12 @@ def func(x)
 {
 	if(x < 10){
 		y = func(x + 1)
-        print(y) # 10 9
+        print "{y}" # 10 9
 	}
 	return x
 }
 
-print(func(8)) # 8
+print "{func(8)}" # 8
 ```
 ```
 def func1(x){
@@ -123,82 +271,15 @@ func1(1) # false
 func1(2) # false
 func1(3) # true
 ```
-
 - #### dostępność funkcji w każdym miejscu programu (j.w.)
-- #### instrukcje:
-    - warunkowa ```if``` z ```else```
-    - pętli ```while```
-    - sterujące ```return, break, continue```
-- #### obsługa operatorów:
-    - arytmetycznych ``` +,-,*,/,^ ```
-    - porównujących ```<,>,<=,>=,==,!=```
-    - logicznych ```||, &&, !```
-    - dostępu ```.```
-- #### leniwa tokenizacja
-- #### moduły:
-     - lekser (Rozpoznaje tokeny i przekazuje je do parsera)
-     - parser (Buduje drzewa składniowe i przekazuje je do interpretera)
-     - interpreter (Wykonuje kod na podstawie otrzymanych drzew składniowych, zarządza również błędami)
-- #### gramatyka bezkontekstowa (po prawej stronie reguł może występować wiele symboli nieterminalnych)
-- #### parser rekursywnie zstępujący (Drzewo wyprowadzenia jest budowane od korzenia do liści)
-- #### możliwość definiowania własnych funkcji (wartość do funkcji przekazywana przez wartość)
-
-Zakładam, że można wywołać return w dowolnym miejscu w kodzie. Wtedy dalsza część funkcji nie będzie się wykonywała.
-Kiedy wywołamy return w głównej części programu to program się zakończy.
-Funkcja będzie mogła zwracać null, zakładamy, że nie można zwracać wielu elementów po przecinku z funkcji.
-Jeśli funkcja nic nie będzie zwracać, a będziemy chcieli coś z niej otrzymać to będziemy otrzymywać null.
-
-```
-a = 5
-def fun(a){
-    a = a + 5
-    return 10
-}
-
-b = fun(a)
-print(b) # 10
-print(a) # 5
-```
-
-```
-a = 5
-return a # zostanie zwrócona wartość a i zakończy się program
-print(a) # nie zostanie wypisana wartość a
-```
-```
-def fun(a){
-    return a # zostanie zwrócona z funkcji wartość 1
-    print(a + 5) # nie zostanie wypisana wartość 6
-}
-print(fun(1)) # 1
-```
-```
-def fun(){
-    return null
-}
-
-print(fun()) # null
-```
-```
-x = 5
-def fun(a){
-    print(a)
-}
-
-fun(x)     # 5
-y = fun(x)
-print(y)   # WrongType: Operation between types String and Int is not allowed in line 8, column 7
-z = y.to_string()
-print(z)   # null
-```
 
 - #### funkcje można wywoływać z argumentami o dowolnych typach
 ```
 def fun(x){
-    print(x) # string
-}            # 1
-             # true
-             # null
+    print "{x}" # string
+}               # 1
+                # true
+                # null
 fun("string")
 fun(1)
 fun(true)
@@ -242,37 +323,41 @@ def fun1(){
 
 - #### konwersja typów:
 
-|        |   Int    | Double     | String     |  Bool    | Dict  | Special|
+|        |   Int    | Double     | String     |  Bool    | Dict  | Null|
 |--------|----------|------------|------------|----------|-------|--------|
 |Int     | X        | to_double()| to_string()| to_bool()| X     | X      |
 |Double  | to_int() | X          | to_string()| X        | X     | X      |
-|String  | to_int() | to_double()| X          | to_bool()| X     | X      |
-|Bool    | to_int() | to_double()| to_string()| X        | X     | X      |
+|String  | to_int() | to_double()| to_string()| to_bool()| X     | X      |
+|Bool    | to_int() | X          | to_string()| X        | X     | X      |
 |Dict    | X        | X          | to_string()| X        | X     | X      |
-|Special | X        | X          | to_string()| X        | X     | X      |
+|Null    | X        | X          | to_string()| X        | X     | X      |
 
-|Konwersje             |    Opis |
-|----------------------|----------|
-|Int, Bool -> Double   | Typ double w przypadku nie posiadania części ułamkowej przy wypisywaniu będzie miał jedno miejsce po przecinku np. 3.0|
-|Double -> Int         | Zaokrąglenie modułu do najbliższej liczby całkowitej|
-|String -> Int, Double |  W przypadku gdy będzie można zamienić stringa na inta to będzie można dokonać zamiany, w przeciwnym wypadku pojawi się błąd|
-|String -> Bool        | Kiedy string zawierałby wartość true albo false, albo liczbę całkowitą to da się zamienić.|
-|Bool -> Int           | Wartość true zamieni się na 1, false na 0|
-
+|Typ konwertowany   | Typ po konwertowaniu          |    Opis |
+|----------------------|----------|-|
+|Int    | Double  | Część całkowita powstałego doubla będzie zawierała wartość zmiennej typu Int, natomiast częścią ułamkową będzie 0 np. 3.0
+|       | Bool    | Wartość 0 zamieni się na true, wartość 1 zamieni się na false, reszta wartości nie może zostac zamieniona na typ Bool
+|Double | Int     | Zaokrąglenie modułu do najbliższej liczby całkowitej|
+|String | Int     |         Można zamienić string na zmienną typu Int tylko kiedy ten string będzie zawierał jedynie cyfry |
+|       | Double  |      Można zamienić string na zmienną typu Double tylko kiedy początek stringa będzie zawierał jedynie cyfry po których nastąpi znak kropki z przynajmniej jedną cyfrą następującą
+|       | String  | Nic się nie zmieni|
+|       | Bool    | Można zamienić string na zmienną typu Double kiedy wartością w stringu jest true lub false|
+|Bool   | Int     | Wartość true zamieni się na 1, false na 0, nie można zamienić innych wartości na typ Int|
+|Dict   | String  | Powstanie string złożony z kluczy oraz wartości słownika przedzielonych dwukropkiem np.<br/> {key1 : 1, key2 : 2} <br/>
+|Null   | String  | Powstałą wartością będzie null|
 
 ### Przykłady konwersji
 
 ```
 a = 6
 b = a.to_double()
-print(b.to_string()) # 6.0
+print "{b}" # 6.0
 ```
 ```
 a = false
 b = true
 c = a.to_double()
 d = b.to_double()
-print(c.to_string() + ", " + d.to_string()) # 0.0, 1.0
+print "{c}, {d}" # 0.0, 1.0
 ```
 ```
 a = 6.4
@@ -285,116 +370,19 @@ f = b.to_int()
 g = c.to_int()
 h = d.to_int()
 
-print(e.to_string(), f.to_string(), g.to_string(), h.to_string()) # 6 7 -6 -7
+print "{e} {f} {g} {h}" # 6 7 -6 -7
 ```
-- #### dwie możliwości wypisywania zmiennych; poprzez zwykłą funkcję print oraz @print
-
-Realizuję typowanie silne, więc na zmiennych musi być wykonana jawna konwersja na Stringa.  <br/>
-Dlatego w funcji print należy przekonwertować jawnie zmienną jeśli nie jest ona typem String.
-
-W funkcji @print klamry zawierają w sobie wyrażenie, które może być zmienną (w tym słownikiem), wyznaczaną wartością lub wywołaniem funkcji itd.<br/>
-Natomiast poza klamrami są znaki, które mają zostać wypisane. Klamry dodatkowo zamieniają zmienną na stringa. <br/>
-Pozwala to niepisanie .to_string() oraz cudzysłowów.<br/>
-W przypadku chęci wypisania znaku klamry należy wstawić podwójną klamrę ( {{ lub }} ).
-
-### Poprawny zapis @printa
 ```
-a = 6.4
-b = 6.6
-c = -6.4
-d = -6.6
+a = "key1"
+b = 1
+c = "key2"
+d = 2
+dict1 = Dict(a : b, c : d)
 
-@print({e} {f} {g} {h}) # 6 7 -6 -7
+print "{dict1}" # {key1 : 1, key2 : 2}
 ```
 
-```
-a = 1
-b = 5
-c = "a"
-d = null
-@print({a}, {b}, {c}, {d}) # 1, 5, a, null
-```
-```
-a = 5
-@print({{a}} {a} {{{a}}}) # {a} 5 {5}
-```
-```
-@print() # null
-```
-```
-def compare(key1, value1, key2, value2){
-    return value1 < value2
-}
-@print({Dict(compare, {"key1" : 2, "key2" : 1})}) # key2 1
-                                                  # key1 2
-```
-```
-dict1 = Dict({"key1" : 5, "key2" : 6})
 
-def fun_iterate(key, value, index){
-    return index
-}
-
-@print({dict1.iterate()}) # key1 1
-                          # key2 2
-```
-
-#### Błąd użycia @printa
-
-```
-6 @print()
-```
-```
-@print
-```
-```
-6 + @print()
-```
-
-#### Poprawne użycie printa
-```
-a = 5
-print(a.to_string()) # 5
-```
-```
-a = 5
-b = 10
-print(a.to_string(), " ", b.to_string()) # 5 10
-```
-```
-a = 5
-b = 10
-print(a.to_string() + " " + b.to_string()) # 5 10
-```
-```
-a = "a"
-b = 10
-c = null
-print(a + " " + b.to_string() + " " + c.to_string()) # a 10 null
-```
-#### Niepoprawne użycie printa
-```
-a = "a"
-b = 10
-c = null
-print(a + " " + b + " " + c)
-```
-
-#### Wypisywanie znaku "
-
-W przypadku gdy chcemy wypisać znak " można użyć funkcji @print zamiast zwykłej funkcji print <br/>
-Przy próbie wypisania " funkcją print pojawi się błąd składniowy (nadmiarowy cudzysłów)
-```
-print("Przykładowy tekst""); # Błąd składniowy
-```
-Dobrym substytutem gdy chcemy pozostaniu przy funkcji print może być znak '
-```
-print("Przykładowy tekst'"); # Przykładowy tekst'
-```
-Używając funkcji @print można wypisać znak " bezproblemowo:
-```
-@print(Przykładowy tekst") # Przykładowy tekst"
-```
 
 - #### akceptowane kombinacje typów dla operatorów wieloargumentowych
 
@@ -414,7 +402,7 @@ Używając funkcji @print można wypisać znak " bezproblemowo:
 | `&&`             |   |   |   | X |
 | `\|\|`           |   |   |   | X |
 
-Dla kropki po lewej stronie może być Int, Double,  String, Bool, Dict, Special. Po prawej stronie będzie wywoływana metoda. <br/>
+Dla kropki po lewej stronie może być Int, Double,  String, Bool, Dict, Null. Po prawej stronie będzie wywoływana metoda. <br/>
 Dla = zmienna po lewej stronie ustali swój typ dynamicznie na podstawie wartości po prawej stronie. <br/>
 
 Można nadpisać zmienną wartością innego typu:
@@ -454,7 +442,7 @@ a = "a
 ```
     1234567890123
 1   if {a, b}{          # UnexpectedToken: Unexpected Token "{" in line 1, column 4
-2       print(a)
+2       print "{a}"
 3   }
 ```
 - DuplicateDefinition - ponowna definicja funkcji o tej samej nazwie (Duplicate function {name} in line {line}, column {column})
@@ -485,7 +473,7 @@ a = "a
 1    def fun(){         # MissingEndingBrace: Missing ending brace in line 1, column 10
 2        return true
 3
-4    print(fun())
+4    print "{fun()}"
 ```
 
 #### Interpreter
@@ -500,7 +488,7 @@ a = "a
 1   y = 5
 2   def func(x)
 3   {
-4 	    print(y)   # UndefinedVariable: No variable "y" in scope or not defined in line 4, column 11
+4 	    print "{y}"   # UndefinedVariable: No variable "y" in scope or not defined in line 4, column 13
 5       return x * x
 6   }
 7   func(y)
@@ -511,7 +499,7 @@ a = "a
      123456789012
 1    x = "a"
 2    y = 1
-3    print(x + y)   # WrongType: Operation between types String and Int is not allowed in line 3, column 7
+3    print "{x + y}"   # WrongType: Operation between types String and Int is not allowed in line 3, column 9
 ```
 
 - NotExactArguments - funkcja wywołana z nieprawidłową liczbą argumentów (Not exact number of arguments in line {line}, column {column})
@@ -548,7 +536,18 @@ a = "a
      123456789012345
 1    a = 2^27 * 2^27  # Overflow: Overflow in line 1, column 5
 ```
-
+- NoValueReturned - nie można przypisać wyniku wywołania fukcji nic nie zwracającej do zmiennej <br/>
+(NoValueReturned: Function {funkction_name} does not return a value in line {line}, column {column})
+```
+    1234567890123456789012345
+1   x = 5
+2   def fun(a){
+3       print "{a}"
+4   }
+5
+6   fun(x)     # 5
+7   y = fun(x) # NoValueReturned: Function "fun" does not return a value in line 7, column 1
+```
 
 - #### Testowanie
 Projekt zamierzam testować zgodnie z popularną konwencją:
@@ -567,32 +566,43 @@ Projekt zamierzam testować zgodnie z popularną konwencją:
 Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w dokumentacji.
 
 
-## Gramatyka EBNF
+## Gramatyka
 
-### EBNF Część składniowa
+### Część składniowa (EBNF)
 |Polecenie                | |                 Definicja|
 |-------------------------|-|---------------------------------------------------------------------------------------------------------|
 |program                  |=| {function_definition \| statement};|
 |function_definition      |=| "def ", id, "(", [parameter_list], ")", block;|
+|parameter_list		      |=| id, {",", id};|
 |block                    |=| "{", {statement}, "}"|
-|statement                |=| variable_access
-|                         | |   \| if_statement
-|                         | |   \| while_statement
-|                         | |   \| assignment
-|                         | |   \| "break"
-|                         | |   \| "continue"
-|                         | |   \| return_statement;|
-|assignment               |=| id, "=", dexpression;|
-|variable_access 		  |=| (function_call \| dict_expression), {".", function_call};|
-|function_call            |=| normal_function_call|
-|                         |=| \| print_call;|
-|normal_function_call     |=| id, ["(", [argument_list], ")"];|
-|argument_list			  |=| dexpression, {",", dexpression};|
+|statement                |=| variable_access|
+|                         | |   \| if_statement|
+|                         | |   \| while_statement|
+|                         | |   \| assignment|
+|                         | |   \| "break"|
+|                         | |   \| "continue"|
+|                         | |   \| return_statement|
+|                         | |   \| print_statement;|
+|assignment               |=| id, "=", expression;|
+|variable_access 		  |=| (function_call \| dict_statement \| linq_expression), {".", function_call};|
+|function_call            |=| id, ["(", [argument_list], ")"];|
+|argument_list			  |=| expression, {",", expression};|
 |if_statement             |=| "if", "(", expression, ")", block, ["else", block];|
 |while_statement          |=| "while", "(", expression, ")", block;|
-|return_statement         |=| "return ", [dexpression];|
+|return_statement         |=| "return ", [expression];|
+|| &nbsp;||
+|print_statement          |=| "print", '"', [print_content], '"';|
+|print_content            |=| {print_text \| interpolated_value \| escaped_char};|
+|interpolated_value       |=| "{", [expression], "}";|
+|| &nbsp;||
+|dict_statement           |=| ["<", id, ">"], dict_argument_list;|
+|dict_argument_list       |=| "{", [dict_pair, {",", dict_pair}], "}";|
+|dict_pair                |=| expression, ":", expression;|
+|| &nbsp;||
+|linq_expression          |=| "select", "{", "from ", variable_access, ["where ", id], ["order by ", id], ["desc"], ["limit ", expression], "}";|
 
-### EBNF Expression
+
+### Expression (EBNF)
 |Polecenie                | |                 Definicja|
 |-------------------------|-|---------------------------------------------------------------------------------------------------------|
 |expression			      |=| or_term , {"\|\|", or_term};|
@@ -605,61 +615,23 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 |factor				      |=| exponent_factor, {"^", exponent_factor};|
 |exponent_factor		  |=| [-], numeric_term;|
 |numeric_term			  |=| num_const|
+|                         | | \| bool_const|
+|                         | | \| null_const|
+|                         | | \| string_const|
 |                         | | \| "(", expression, ")"|
 |                         | | \| variable_access;|
 
+### Część leksykalna (wyrażenia regularne)
 
-### EBNF dla słownika
 |Polecenie                | |                 Definicja|
 |-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|dexpression              |=| expression|
-|                         | | \| dict_expression|
-|                         | | \| linq_expression;|
-|dict_expression          |=| dict_const, "(", [ dict_argument_list \| id, [",", dict_argument_list]], ")";|
-|dict_argument_list       |=| "{}"|
-|                         | | \| "{", dict_pair, {",", dict_pair}, "}";|
-|dict_pair                |=| expression, ":", expression;|
-
-### EBNF dla zapytań LINQ
-|Polecenie                | |                 Definicja|
-|-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|linq_expression          |=| "select", "{", "from ", (variable_access \| dict_expression), ["where ", id], ["order by ", id], ["desc"], ["limit ", (int_const \| variable_access)], "}"|
-
-### EBNF Id
-|Polecenie                | |                 Definicja|
-|-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|parameter_list		      |=| id, {",", id};|
-|id                       |=| letter, {letter \| digit \| "_"};|
-
-### EBNF Funkcja @print
-|Polecenie                | |                 Definicja|
-|-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|print_call               |=| "@print", "(", [print_content], ")";|
-|print_content            |=| {text | interpolated_variable | double_brace};|
-|text                     |=| not_brace_char, {not_brace_char};|
-|interpolated_variable    |=| "{", [dexpression], "}";|
-|double_brace             |=| "{{" || "}}";|
-
-
-### EBNF Część leksykalna
-|Polecenie                | |                 Definicja|
-|-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|num_const				  |=| int_const, [".", {digit}];|
-|int_const                |=| zero_digit|
-|                         | | \| non_zero_digit, {digit};|
-|bool_const				  |=| "true" \| "false";|
-|null_const               |=| "null";|
-|dict_const               |=| "Dict";|
-|string_const			  |=| '"', {char}, '"';|
-|char					  |=| digit \| not_digit;|
-|not_brace_char           |=| letter \| digit \| not_brace_special_char;|
-|digit                    |=| zero_digit \| not_zero_digit;|
-|zero_digit				  |=| "0";|
-|not_zero_digit			  |=| "1" \| "2" \| "3" \| ...;|
-|not_digit				  |=| letter \| special_char;|
-|special_char             |=| not_brace_special \| "{" \| "}";
-|not_brace_special_char   |=| "$" \| "@" \| ...;|
-|letter 				  |=| "a" \| ... \| "z" \| "A" \| ... \| "Z";|
+|num_const				  |=| 0\|[1-9][0-9]\*[\.[0-9]*]?      |
+|bool_const				  |=| true\|false                     |
+|null_const               |=| null                            |
+|string_const			  |=| "[[^"]\|\\\\"]*"                |
+|print_text               |=| [^"\\{\\\\]+                    |
+|escaped_char             |=| \\\\.                           |
+|id                       |=| [A-Za-z][[A-Za-z]\|[0-9]\|_]*   |
 
 
 ## Podstawowe konstrukcje języka
@@ -674,67 +646,67 @@ x = 10 # tutaj jest komentarz
 #### Poprawne użycie instrukcji warunkowych
 ```
 if(2 > 1){
-    print(10) # 10
+    print "{10}" # 10
 }
 else{
-    print(5)
+    print "{5}"
 }
 ```
 ```
 if(2 > 1){
     if (3 > 2){
-        print(10) # 10
+        print "{10}" # 10
     }
 }
 ```
 ```
 if(2 > 1 && 4 > 3){
-        print(10) # 10
+        print "{10}" # 10
 }
 ```
 ```
 if(2 > 1 || 4 > 3){
-        print(10) # 10
+        print "{10}" # 10
 }
 ```
 ```
 if(!(2 > 1)){
-    print(10) #
+    print "{10}" #
 }
 ```
 ```
 if(!(true)){
-    print(10) #
+    print "{10}" #
 }
 ```
 ```
 if(2 < 1){
-    print(10) #
+    print "{10}" #
 }
 ```
 ```
 if(2 <= 1){
-    print(10) #
+    print "{10}" #
 }
 ```
 ```
 if(2 > 1){
-    print(10) # 10
+    print "{10}" # 10
 }
 ```
 ```
 if(2 >= 1){
-    print(10) # 10
+    print "{10}" # 10
 }
 ```
 ```
 if(2 == 1){
-    print(10) #
+    print "{10}" #
 }
 ```
 ```
 if(2 != 1){
-    print(10) # 10
+    print "{10}" # 10
 }
 ```
 
@@ -743,38 +715,38 @@ if(2 != 1){
 #### Brak nawiasu klamrowego
 ```
 if(2 > 1){
-    if (3 > 2) print(10)
+    if (3 > 2) print "{10}"
 }
 ```
 #### Else nie odnosi się do żadnego if
 ```
 else{
-    print(5)
+    print "{5}"
 }
 ```
 #### Napisanie warunku w instrukcji else
 ```
 if (3>2){
-    print(10)
+    print "{10}"
 }
 else(2>1){
-    print(5)
+    print "{5}"
 }
 ```
 #### Zanegowanie wartości nie-boolowskiej
 ```
 if (!(2)){
-    print(5)
+    print "{5}"
 }
 ```
 ```
 if (!(0)){
-    print(5)
+    print "{5}"
 }
 ```
 ```
 if (!(1)){
-    print(5)
+    print "{5}"
 }
 ```
 #### Błąd porównania
@@ -783,29 +755,29 @@ x = 10;
 y = 'ABC';
 if(x > y)
 {
-    print(1);
+    print "{1}";
 }
 ```
 
 #### Niezgodny typ w instukcji warunkowej
 ```
 if (5){
-    print(10)
+    print "{10}"
 }
 ```
 ```
 if ("key"){
-    print(10)
+    print "{10}"
 }
 ```
 ```
 if ("true"){
-    print(10)
+    print "{10}"
 }
 ```
 ```
 if (Dict()){
-    print(10)
+    print "{10}"
 }
 ```
 
@@ -814,7 +786,7 @@ if (Dict()){
 ```
 x = 7
 while(x > 0){
-    print(x) # 7
+    print "{x}" # 7
     x = x-3  # 4
 }            # 1
 ```
@@ -823,17 +795,17 @@ x = 10
 while(x > 0){
     y = 0
     while(y < x){
-        print(y)    # 0   # 0   # 0   # 0
+        print "{y}"    # 0   # 0   # 0   # 0
         y = y + 8   # 8
     }
-    print(x)        # 10  # 7   # 4   # 1
+    print "{x}"        # 10  # 7   # 4   # 1
     x = x-3
 }
 ```
 ```
 x = 10
 while(true){
-    print(x)  # 10
+    print "{x}"  # 10
 }             # 10 ...
 ```
 ### Przykładowe błędy pętli
@@ -841,14 +813,14 @@ while(true){
 ```
 x = 10
 while(){
-    print(x)
+    print "{x}"
     x = x-3
 }
 ```
 #### Zdefiniowanie wartości początkowej wewnątrz pętli
 ```
 while((x = 5) < 8){
-    print(x)
+    print "{x}"
 }
 ```
 
@@ -861,17 +833,20 @@ while((x = 5) < 8){
 |y = 10.5      |Double |
 |z = "string"  |String |
 |t = true      |Bool   |
-|m = null      |Special|
+|m = null      |Null   |
+
+Typ Null określa brak wartości. Jedyną wartością o typie Null może być wartość null. <br/>
+Przydaje się kiedy nie chcemy nic zwracać z funkcji oraz przy metodach na słownikach lower_bound oraz upper_bound o których później będzie mowa.
 
 #### Wypisywanie wartości
 ```
 x = 10
-print(x) # 10
+print "{x}" # 10
 ```
-#### Błąd wykonywania operacji na zmiennej typu Special (null)
+#### Błąd wykonywania operacji na zmiennej typu Null (null)
 ```
 x = null
-print(x + 2)
+print "{x + 2}"
 ```
 
 #### Konkatenacja łańcuchów znaków
@@ -879,9 +854,9 @@ print(x + 2)
 str1 = "poczatek "
 str2 = "koniec"
 str3 = str + str2
-print(str3) # poczatek koniec
-print(str1 + str2) # poczatek koniec
-print(str3 == str1 + str2) # true
+print "{str3}" # poczatek koniec
+print "{str1 + str2}" # poczatek koniec
+print "{str3 == str1 + str2}" # true
 ```
 
 ### Zakres zmiennych
@@ -901,13 +876,13 @@ mul = x * 2
 if(sum == 12)
 {
     div = x / 2
-    print(div) # 5
-    print(x) # 10
+    print "{div}" # 5
+    print "{x}" # 10
     x = 7    # modyfikacja zmiennej sprzed ifa (nie tworzymy nowej, która by ją przykryła)
 }
 
-print(div) # 5
-print(x) # 7
+print "{div}" # 5
+print "{x}" # 7
 ```
 
 #### Definiowanie własnej funkcji ze zwracaniem wartości oraz wywołanie
@@ -920,8 +895,8 @@ def func(x)
 
 y = 10
 result = func(y)
-print(result) # 100
-print(func(y)) # 100
+print "{result}" # 100
+print "{func(y)}") # 100
 
 ```
 #### Błąd zmiennej globalnej wykorzystywanej w funkcji
@@ -929,7 +904,7 @@ print(func(y)) # 100
 y = 5
 def func(x)
 {
-	print(y)   # UndefinedVariable:  No variable "y" in scope or not defined in line 4, column 11
+	print "{y}"   # UndefinedVariable:  No variable "y" in scope or not defined in line 4, column 11
     return x * x
 }
 func(y)
@@ -944,10 +919,10 @@ def func(x)
 
 y = 4
 z = func(y)
-print(y) # 4
-print(z) # 9
+print "{y}" # 4
+print "{z}" # 9
 
-print(x) # Błąd : # UndefinedVariable:  No variable "x" in scope or not defined in line 12, column 7
+print "{x}" # Błąd : # UndefinedVariable:  No variable "x" in scope or not defined in line 12, column 7
 ```
 
 #### Mutowalność zmiennych
@@ -967,13 +942,13 @@ x = Dict()
 ```
 x = 5
 def fun(x){
-    print(x) # 5
+    print "{x}" # 5
     return x + 5
 }
 
-print(x) # 5
+print "{x}" # 5
 x = fun(x)
-print(x) # 10
+print "{x}" # 10
 ```
 
 ### Kolejność wykonywania działań
@@ -992,11 +967,13 @@ print(x) # 10
 
 Słownik zawiera elementy złożone z klucza oraz wartości. Klucze muszą być unikalne.<br/>
 Każdy element w słowniku musi mieć tę samą parę typów. Typ klucza może się różnić od typu wartości.<br/>
-Możliwe typy kluczy oraz wartości to Int, String, Double, Bool.
+Możliwe typy kluczy oraz wartości to Int, String, Double, Bool, Dict.
 
 ### Tworzenie typu słownikowego
 
-Pierwszym opcjonalnym argumentem słownika jest nazwa funkcji służącej do ustanawiania kolejności w słowniku.<br/>
+Słownik można tworzyć na 2 sposoby.<br/>
+Pierwszy sposób polega na wywołaniu konstruktora klasy Dict, a drugi na użyciu operatorów.<br/>
+W pierwszym, standardowym sposobie tworzenia słownika pierwszym opcjonalnym jego argumentem jest nazwa funkcji służącej do ustanawiania kolejności w słowniku.<br/>
 Funkcja porównuje 2 elementy słownika i w ten sposób określa relację liniowo-porządkującą na nim. <br/>
 Określa ona czy pierwszy z dwóch elementów ma się znaleźć przed drugim w porządku słownika.<br/>
 Drugim opcjonalnym argumentem słownika jest zawartość słownika. <br/>
@@ -1019,7 +996,7 @@ return key1 < key2
 Kolejność dla typu String jest domyślnie leksykograficzna, dla typu Int zgodnie z kolejnością liczb całkowitych, dla typu Double zgodnie z kolejnością liczb rzeczywistych, a dla typu Bool zgodnie z kolejnością wartości logicznych (fałsz < prawda).
 
 
-Słownik można utworzyć w takim razie na kilka sposobów.
+Konstruktora można użyć na kilka sposobów:
 1.  Tworzenie słownika pustego
 ```
 dict1 = Dict()
@@ -1054,7 +1031,43 @@ value2 = 2
 dict1 = Dict(compare, {key1 : value1, key2 : value2})
 ```
 
+Słownik można też utworzyć używając operatorów. Jest to zupełnie poprawne, ale niestandardowe podejście. <br/>
+Zmieniona jest tylko zapis tworzenia słownika. <br/>
+Nie ma żadnego słowa kluczowego oraz nazwa funkcji służącej do ustanawiania kolejności w słowniku znajduje się w nawiasach trójkątnych zamiast być argumentem funkcji.
 
+1.  Tworzenie słownika pustego
+```
+dict1 = {}
+```
+2.	Tworzenie słownika wraz z podaniem początkowych elementów słownika
+```
+key1 = „key1”
+value1 = 1
+key2 = „key2”
+value2 = 2
+dict1 = {key1 : value1, key2 : value2}
+```
+3.	Tworzenie słownika bez podania początkowych elementów słownika ale z podaniem funkcji służącej do ustanawiania kolejności w słowniku
+```
+def compare(key1, value1, key2, value2){
+    return key1 < key2
+}
+
+dict1 = <compare>{}
+```
+
+4.	Tworzenie słownika wraz z podaniem początkowych elementów słownika oraz z podaniem funkcji służącej do ustanawiania kolejności w słowniku
+```
+def compare(key1, value1, key2, value2){
+return key1 < key2
+}
+
+key1 = „key1”
+value1 = 1
+key2 = „key2”
+value2 = 2
+dict1 = <compare>{key1 : value1, key2 : value2}
+```
 
 ### Operacje na słowniku
 
@@ -1064,6 +1077,12 @@ dict1 = Dict({“key1” : 1, “key2” : 2})
 dict1.print() # key1 : 1
               # key2 : 2
 ```
+```
+dict1 = Dict({{"key11" : 1, "key12" : 2} : 1, {"key21" : 1, "key22" : 2} : 2})
+dict1.print() # {"key11" : 1, "key12" : 2} : 1
+              # {"key21" : 1, "key22" : 2} : 2
+```
+
 2.	add - dodawanie do słownika
 
 Funkcja przyjmuje 2 argumenty. Pierwszym argumentem jest klucz, drugim wartość elementu, który chcemy dodać do słownika. <br/>
@@ -1100,7 +1119,7 @@ Kiedy w trakcie wykonywania operacji na słowniku stanie się on w pewnym momenc
 Funkcja jako argument przyjmuje klucz na takich samych zasadach jak remove.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print(dict1.get_value(„key1”)) # 2
+print "{dict1.get_value(„key1”)}" # 2
 ```
 
 5. exists - sprawdzanie, czy dany klucz znajduje się w słowniku
@@ -1108,7 +1127,7 @@ print(dict1.get_value(„key1”)) # 2
 Funkcja jako argument przyjmuje klucz na takich samych zasadach jak remove.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print(dict1.exists(„key1”)) # true
+print "{dict1.exists(„key1”)}" # true
 ```
 
 6.	set - zmiana wartości o podanym kluczu
@@ -1124,7 +1143,7 @@ dict1.print() # key1 : 3
 7.	size - sprawdzenie liczby elementów w słowniku
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print(dict1.size()) # 2
+print "{dict1.size()}" # 2
 ```
 
 8.  lower_bound - znajdowanie pierwszego niemniejszego elementu niż podany
@@ -1134,17 +1153,17 @@ Gdy znajdziemy pierwszy niemniejszy element niż podany w słowniku według funk
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print(dict1.lower_bound(“key2”, 1)) # key2
+print "{dict1.lower_bound(“key2”, 1)}" # key2
 ```
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print(dict1.lower_bound(“key2”, 1)) # key2
+print "{dict1.lower_bound(“key2”, 1)}" # key2
 ```
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print(dict1.lower_bound(“key4”, 1)) # null
+print "{dict1.lower_bound(“key4”, 1)}" # null
 ```
 
 ```
@@ -1153,24 +1172,30 @@ return value1 < value2
 }
 
 dict1 = Dict(compare, {“key1” : 1, “key2” : 2, "key3" : 3})
-print(dict1.lower_bound(“key3”, 1)) # key1
+print "{dict1.lower_bound(“key3”, 1)}" # key1
 
 ```
+```
+dict1 = Dict(compare, {“key1” : 1, “key2” : 2, "key3" : 3})
+a = dict1.lower_bound(“key3”, 1))
+print "{a}" # key1
+```
+
 
 9.  upper_bound - znajdowanie pierwszego większego elementu niż podany
 
 Analogicznie jak funkcja lower_bound tylko zwracany jest klucz pierwszego większego elementu.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, “key3” : 3})
-print(dict1.upper_bound(“key2”, 1)) # key3
+print "{dict1.upper_bound(“key2”, 1)}" # key3
 ```
 ```
 dict1 = Dict({“key1” : 1, “key3” : 3, “key4” : 4})
-print(dict1.upper_bound(“key2”, 1)) # key3
+print "{dict1.upper_bound(“key2”, 1)}" # key3
 ```
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, “key3” : 3})
-print(dict1.upper_bound(“key4”, 1)) # null
+print "{dict1.upper_bound(“key4”, 1)}" # null
 ```
 
 
@@ -1209,18 +1234,22 @@ def sum(start, key, value){
 dict1.accumulate("", sum) # "key1 key2 key3"
 ```
 
-11. iterate - iterowanie po elementach słownika i wykonywanie na każdym wskazaną funkcję przekazując do niej jako argumenty aktualne klucz, wartość oraz indeks (numer elementu słownika licząc od 1)
+11. iterate - iterowanie po elementach słownika i wykonywanie na każdym wskazaną funkcję przekazując do niej jako argumenty aktualne klucz, wartość oraz indeks <br/>
+(numer elementu słownika licząc od 1)
+
+Funkcja zwraca słownik którego klucze odpowiadają kluczom elementów ze słownika bazowego, dla których funkcja zwraca pewien wynik. <br/>
+Wartości zwróconego słownika odpowiadają wynikom funkcji iterującej dla tych elementów, dla których zostały zwrócone jakieś wyniki.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
 
 def fun(key, value, indeks){
     if (value > 1){
-        return key + ":" + value
+        return value
     }
 }
 
-print(dict1.iterate(fun)) # key2 : 2
-                          # key3 : 3
+print "{dict1.iterate(fun)}" # key2 : 2
+                             # key3 : 3
 ```
 
 ```
@@ -1228,11 +1257,22 @@ dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
 
 def fun(key, value, indeks){
     if (indeks < 3 && value > 1){
-        return key + ":" + value
+        return value + 10
     }
 }
 
-dict1.iterate(fun).print() # key2 : 2
+dict1.iterate(fun).print() # key2 : 12
+```
+```
+dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
+
+def fun(key, value, indeks){
+    if (indeks < 3 && value > 1){
+        return key + " : " + value
+    }
+}
+
+dict1.iterate(fun).print() # key2 : key2 : 2
 ```
 
 ```
@@ -1250,7 +1290,7 @@ def sum(start, key, value){
 }
 
 results_dict = dict1.iterate(fun)
-print(results_dict.accumulate(0, sum)) # 5
+print "{results_dict.accumulate(0, sum)}" # 5
 ```
 
 Tak to będzie zaimplementowane mniej więcej w C++
@@ -1380,7 +1420,7 @@ dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
 
 def fun(key, value, indeks){
     if (value > 1){
-        return key + ":" + value
+        return value + 10
     }
 }
 
@@ -1388,9 +1428,9 @@ dict2 = select{
 from dict1.iterate(fun)
 }
 
-dict2.print() # key1 : key1 : 1
-              # key2 : key2 : 2
-              # key3 : key3 : 3
+dict2.print() # key2 : 12
+              # key3 : 13
+
 ```
 ```
 def fun (key, value){
@@ -1409,7 +1449,7 @@ dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
 
 def iterate_fun(key, value, index){
     if (value > 1){
-        return key + ":" + value.to_string()
+        return value
     }
 }
 
@@ -1421,8 +1461,8 @@ dict2 = select{
 from from_fun(dict1)
 }
 
-dict2.print() # key2 : key2 : 2
-              # key3 : key3 : 3
+dict2.print() # key2 : 2
+              # key3 : 3
 ```
 
 ```
@@ -1457,7 +1497,7 @@ from dict1
 limit dict1.accumulate(0, sum)
 }
 
-dict2.print() # 1 : 1
-              # 3 : -1
+dict2.print()   # 1 : 1
+                # 3 : -1
 ```
 
