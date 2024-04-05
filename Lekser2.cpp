@@ -28,7 +28,18 @@ public:
 		std::vector<Token> tokens;
 		std::regex tokenRegex(
 			//R"((0|[1-9][0-9]*\.[0-9]+|[1-9][0-9]*)|"true"|"false"|"null"|"[^"\\]*(\\.[^"\\]*)*"|[A-Za-z_][A-Za-z_0-9]*|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|;|#[^\n]*|\.)",
-			R"((0|[1-9][0-9]*[\.[0-9]+]?)|"true"|"false"|"null"|"[^"\\]*(\\.[^"\\]*)*"|[A-Za-z_][A-Za-z_0-9]*|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|;|#[^\n]*|\.)",
+			//R"((0|[1-9][0-9]*[\.[0-9]+]?)|true|false|null|"[^"\\]*(\\.[^"\\]*)*"|[A-Za-z_][A-Za-z_0-9]*|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|;|#[^\n]*|\.)",
+			R"((0|[1-9][0-9]*(\.[0-9]+)?)|true|false|null|"[^"\\]*(\\.[^"\\]*)*"|[A-Za-z_][A-Za-z_0-9]*|=|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|\:|;|#[^\n]*|\.)",
+
+			// R"((0|[1-9][0-9]*[\.[0-9]+]?)"
+			// R"(|true)"
+			// R"(|false)"
+			// R"(|null)"
+			// R"(|"[[^"]|\\"]*")"
+			// R"(|[A-Za-z_][A-Za-z_0-9]*)"
+			// R"(|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|;|#[^\n]*|\.))",
+
+			//"[^"\\]*(\\.[^"\\]*)*"
 			std::regex_constants::ECMAScript
 			);
 		auto words_begin = std::sregex_iterator(source_.begin(), source_.end(), tokenRegex);
@@ -49,12 +60,13 @@ private:
 
 	TokenType determineType(const std::string& token) {
 		if (std::regex_match(token, std::regex(R"((0|[1-9][0-9]*(\.[0-9]+)?))"))) return TokenType::NumConst;
-		if (std::regex_match(token, std::regex(R"("true"|"false")"))) return TokenType::BoolConst;
+		if (std::regex_match(token, std::regex(R"(true|false)"))) return TokenType::BoolConst;
 		if (token == "null") return TokenType::NullConst;
 		if (std::regex_match(token, std::regex(R"("[^"\\]*(\\.[^"\\]*)*")"))) return TokenType::StringConst;
+		//if (std::regex_match(token, std::regex(R"("[[^"]|\\"]*")"))) return TokenType::StringConst;
 		if (std::regex_match(token, std::regex(R"([A-Za-z_][A-Za-z_0-9]*)"))) return TokenType::Id;
 		if (token[0] == '#') return TokenType::Comment;
-		if (std::regex_match(token, std::regex(R"(==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|;)"))) return TokenType::Symbol;
+		if (std::regex_match(token, std::regex(R"(=|==|!=|>=|<=|<|>|\|\||&&|!|\+|\-|\*|\/|\^|\(|\)|\{|\}|\[|\]|,|\:|;)"))) return TokenType::Symbol;
 		return TokenType::Unknown;
 	}
 };
@@ -63,9 +75,21 @@ int main() {
 	std::string sourceCode = R"(
         def myFunction(x, y) {
             if (x > 10) {
-                print "x is greater than 10"
+                print "x is greater than 10" # testowy komentarz
             }
+			if (true){
+				print("aaa", {x})
+			}
         }
+		1,
+		22
+		5
+		print "x is greater # test than 10"
+
+		dict1 = Dict({"key1" : 1, "key2" : 2, "key3" : 3, "key4" : 4})
+		select
+		from dict1
+
     )";
 
 	Lexer lexer(sourceCode);
@@ -77,3 +101,5 @@ int main() {
 
 	return 0;
 }
+
+// znak # oznacza komentarz w dowolnym miejscu poza stringiem
