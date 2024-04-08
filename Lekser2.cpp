@@ -1,18 +1,18 @@
-#include <iostream>
-#include <iomanip> 
+#pragma once
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <map>
 #include <variant>
 #include <optional>
 #include <limits>
 #include <algorithm>
 
+using namespace std;
 const char ETX_CHAR = '\x03'; //End of Text
 
-enum class TokenType {
+enum class TokenType
+{
     IntConst,
     DoubleConst,
     BoolConst,
@@ -25,9 +25,10 @@ enum class TokenType {
     Whitespaces,
 };
 
-using TokenValue = std::variant<int, double, std::string, std::monostate>; // Dodane std::monostate dla tokenów bez wartoœci
+using TokenValue = variant<int, double, string, monostate>; // Dodane monostate dla tokenów bez wartoœci
 
-struct Token {
+struct Token
+{
     TokenType type;
     TokenValue value;
     size_t lineNumber;
@@ -38,7 +39,7 @@ struct Token {
 class Lexer
 {
 private:
-    std::string source_;
+    string source;
 
     size_t currentPosition = 0;
     size_t currentLine = 1;
@@ -47,7 +48,8 @@ private:
     const size_t maxIdentifierLength = 64;
     const size_t maxStringLength = 1024;
 
-    std::map<std::string, int> keywordMap = {
+    map<string, int> keywordMap =
+    {
                 {"def", 0},
                 {"if", 1},
                 {"else", 2},
@@ -65,7 +67,8 @@ private:
     };
 
     // Mapa wszystkich symboli z ich unikalnymi numerami identyfikacyjnymi
-    std::map<std::string, int> symbols = {
+    map<string, int> symbols =
+    {
         {"+", 1}, {"-", 2},
         {"*", 3}, {"/", 4},
         {"^", 5},
@@ -78,17 +81,13 @@ private:
         {",",22},{":",23},{".",24}
     };
 
-    void setSource(const std::string& source)
+    void setSource(const string& source) { this->source = source; }
+    char currentChar() { return currentPosition < source.length() ? source[currentPosition] : ETX_CHAR; }
+
+    void advance()
     {
-        source_ = source + ETX_CHAR; //Straznik na koncu, dzieki ktoremu wykryjemy nieprawidlowy token na samym koñcu
-    }
-
-    char currentChar() {
-        return currentPosition < source_.length() ? source_[currentPosition] : ETX_CHAR;
-    }
-
-    void advance() {
-        if (currentChar() == '\n') {
+        if (currentChar() == '\n')
+        {
             currentLine++;
             currentColumn = 0;
         }
@@ -96,97 +95,136 @@ private:
         currentColumn++;
     }
 
-    Token readNumber() {
-        size_t start = currentPosition;
-        while (isdigit(currentChar()) || currentChar() == '.') {
-            advance();
-        }
-
-        // Ekstrakcja tekstu reprezentuj¹cego liczbê
-        std::string numberStr = source_.substr(start, currentPosition - start);
-
-        // Sprawdzenie, czy liczba zawiera kropkê, co wskazywa³oby na liczbê zmiennoprzecinkow¹
-        if (numberStr.find('.') != std::string::npos) {
-            try {
-                double value = std::stod(numberStr);
-                return Token{ TokenType::DoubleConst, value, currentLine, currentColumn - (currentPosition - start) };
-            }
-            catch (const std::out_of_range&) {
-                throw std::runtime_error("Double value out of range at line: " + std::to_string(currentLine) + " column: " + std::to_string(currentColumn));
-            }
-        }
-        else {
-            try {
-                int value = std::stoi(numberStr);
-                return Token{ TokenType::IntConst, value, currentLine, currentColumn - (currentPosition - start) };
-            }
-            catch (const std::out_of_range&) {
-                throw std::runtime_error("Integer value out of range at line: " + std::to_string(currentLine) + " column: " + std::to_string(currentColumn));
-            }
-        }
-    }
-
-    Token readIdentifierOrKeyword() {
-        size_t start = currentPosition;
-        while (isalnum(currentChar()) || currentChar() == '_') {
-            advance();
-        }
-
-        std::string identifier = source_.substr(start, currentPosition - start);
-
-        // Sprawdzenie, czy utworzony identyfikator jest s³owem kluczowym
-        if (keywordMap.find(identifier) != keywordMap.end()) {
-            // Jeœli tak, zwróæ token reprezentuj¹cy s³owo kluczowe
-            return Token{ TokenType::Keyword, identifier, currentLine, currentColumn - (currentPosition - start) };
-        }
-        else {
-            // W przeciwnym razie zwróæ token reprezentuj¹cy identyfikator
-            return Token{ TokenType::Id, identifier, currentLine, currentColumn - (currentPosition - start) };
-        }
-    }
-
-
-    Token readString() {
-        advance(); // Pomijamy pocz¹tkowy cudzys³ów
-        std::string value;
+    Token readNumber()
+    {
         size_t startLine = currentLine;
         size_t startColumn = currentColumn;
+        size_t start = currentPosition;
 
-        while (currentChar() != '"' && currentChar() != ETX_CHAR) {
-            if (currentChar() == '\\') { // Obs³uga sekwencji ucieczki
+        while (isdigit(currentChar()) || currentChar() == '.') advance();
+        string numberStr = source.substr(start, currentPosition - start);
+
+        size_t dots = count(numberStr.begin(), numberStr.end(), '.');
+
+        // Check for multiple dots or invalid number format
+        if (dots > 1)
+        {
+            throw runtime_error("Invalid number format with multiple dots at line " + to_string(startLine) + " column " + to_string(startColumn));
+        }
+
+        // Attempt to convert string to number
+        if (dots > 0)
+        {
+            try
+            {
+                double value = stod(numberStr);
+                return Token{ TokenType::DoubleConst, value, startLine, startColumn, start };
+            }
+            catch (const out_of_range&)
+            {
+                throw runtime_error("Double value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
+            }
+        }
+        else
+        {
+            try
+            {
+                int value = stoi(numberStr);
+                return Token{ TokenType::IntConst, value, startLine, startColumn, start };
+            }
+            catch (const out_of_range&)
+            {
+                throw runtime_error("Integer value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
+            }
+        }
+    }
+
+    Token readIdentifierOrKeyword()
+    {
+        size_t start = currentPosition;
+        size_t startLine = currentLine;
+        size_t startColumn = currentColumn;
+        string identifier;
+
+        while (isalnum(currentChar()) || currentChar() == '_')
+        {
+            identifier += currentChar();
+            if (identifier.length() > maxIdentifierLength)
+            {
+                throw runtime_error("Identifier too long (more than " + to_string(maxIdentifierLength) + " characters) at line " + to_string(startLine) + " column " + to_string(startColumn));
+            }
+            advance();
+        }
+
+        // Sprawdzenie, czy utworzony identyfikator jest s³owem kluczowym (lub null, true, false)
+        if (identifier == "null") return Token{ TokenType::NullConst, {}, startLine, startColumn, start };
+        if (identifier == "true" || identifier == "false") return Token{ TokenType::BoolConst, identifier == "true", startLine, startColumn, start };
+        if (auto it = keywordMap.find(identifier); it != keywordMap.end())
+        {
+            // Jeœli tak, zwróæ id tokenu reprezentuj¹cego s³owo kluczowe
+            return Token{ TokenType::Keyword, it->second, startLine, startColumn, start };
+        }
+        else
+        {
+            // W przeciwnym razie zwróæ token reprezentuj¹cy identyfikator
+            return Token{ TokenType::Id, identifier, startLine, startColumn, start };
+        }
+    }
+
+
+    Token readString()
+    {
+        string value;
+        size_t startLine = currentLine;
+        size_t startColumn = currentColumn;
+        size_t start = currentPosition;
+        advance(); // Pomijamy pocz¹tkowy cudzys³ów
+
+        while (currentChar() != '"' && currentChar() != ETX_CHAR)
+        {
+            if (currentChar() == '\\')
+            { // Obs³uga sekwencji ucieczki
                 advance(); // Przesuwamy siê, aby uzyskaæ nastêpny znak po '\'
-                switch (currentChar()) {
+                switch (currentChar())
+                {
                 case 'n': value += '\n'; break;
                 case 't': value += '\t'; break;
                 case '\\': value += '\\'; break;
                 case '"': value += '"'; break;
-                default: value += '\\'; value += currentChar(); // Nieznana sekwencja ucieczki
+                default: value += '\\'; value += currentChar();// Nieznana sekwencja ucieczki
                 }
             }
-            else {
-                value += currentChar();
-            }
+            else value += currentChar();
             advance();
+
+            if (value.length() > maxStringLength)
+            {
+                throw runtime_error("String too long (more than " + to_string(maxStringLength) + " characters) at line " + to_string(startLine) + " column " + to_string(startColumn));
+            }
         }
 
-        if (currentChar() == ETX_CHAR) {
-            throw std::runtime_error("String not closed before end of file at line " + std::to_string(startLine) + " column " + std::to_string(startColumn));
+        if (currentChar() == ETX_CHAR)
+        {
+            throw runtime_error("String not closed before end of file at line " + to_string(startLine) + " column " + to_string(startColumn));
         }
 
         advance(); // Pomijamy koñcowy cudzys³ów
 
-        return Token{ TokenType::StringConst, value, startLine, startColumn };
+        return Token{ TokenType::StringConst, value, startLine, startColumn, start };
     }
 
 
-    Token readComment() {
+    Token readComment()
+    {
         size_t startLine = currentLine;
         size_t startColumn = currentColumn;
+        size_t start = currentPosition;
         // Pomijamy znak rozpoczynaj¹cy komentarz, tutaj '#'
         advance();
 
-        std::string commentContent;
-        while (currentChar() != '\n' && currentChar() != ETX_CHAR) {
+        string commentContent;
+        while (currentChar() != '\n' && currentChar() != ETX_CHAR)
+        {
             commentContent += currentChar();
             advance();
         }
@@ -195,168 +233,74 @@ private:
         // poniewa¿ jego obecnoœæ mo¿e byæ istotna dla innych elementów leksera,
         // takich jak zliczanie linii.
 
-        return Token{ TokenType::Comment, commentContent, startLine, startColumn };
+        return Token{ TokenType::Comment, commentContent, startLine, startColumn, start };
     }
 
-    Token readSymbol() {
+    Token readSymbol()
+    {
         size_t startLine = currentLine;
         size_t startColumn = currentColumn;
+        size_t start = currentPosition;
+        string potentialSymbol;
+        string longestMatch;
 
-        std::string potentialSymbol(1, currentChar());
-        std::string longestMatch = potentialSymbol;
-
-        // Sprawdzanie d³u¿szych symboli z³o¿onych
-        advance(); // Przesuwamy siê do przodu, aby sprawdziæ potencjalne z³o¿one symbole
-        if (!symbols.count(potentialSymbol)) {
-            throw std::runtime_error("Unknown symbol at line " + std::to_string(currentLine) + " column " + std::to_string(currentColumn));
+        for (int lookAhead = 0; lookAhead < 2; ++lookAhead)
+        { // Symbol ma maksymalnie 2 znaki
+            if (currentPosition + lookAhead < source.size())
+            {
+                potentialSymbol += source[currentPosition + lookAhead];
+                // Sprawdzanie, czy bie¿¹cy potencjalny symbol pasuje
+                if (symbols.find(potentialSymbol) != symbols.end()) longestMatch = potentialSymbol; // Znaleziono nowy najd³u¿szy pasuj¹cy 
+            }
         }
 
-        int symbolId = symbols[potentialSymbol]; // Zak³adamy, ¿e ka¿dy symbol ma unikalne ID.
-
-        // Jeœli obecny znak mo¿e tworzyæ z³o¿ony symbol z poprzednim, sprawdŸ to
-        potentialSymbol += currentChar();
-        if (symbols.count(potentialSymbol)) {
-            longestMatch = potentialSymbol; // Znaleziono d³u¿szy, pasuj¹cy symbol
-            symbolId = symbols[longestMatch]; // Aktualizujemy ID na nowo znaleziony, d³u¿szy symbol
-            advance(); // Konsumujemy dodatkowy znak, który jest czêœci¹ z³o¿onego symbolu
+        if (!longestMatch.empty())
+        {
+            currentPosition += longestMatch.length(); // Aktualizacja pozycji o d³ugoœæ znalezionego symbolu
+            currentColumn += longestMatch.length(); // Aktualizacja kolumny o d³ugoœæ znalezionego symbolu
+            int symbolId = symbols[longestMatch]; // Pobranie ID symbolu
+            return Token{ TokenType::Symbol, symbolId, startLine, startColumn, start };
         }
 
-        return Token{ TokenType::Symbol, longestMatch, startLine, startColumn };
+        // Gdy nie znajdziemy pasuj¹cego symbolu, rzuæ wyj¹tek
+        throw runtime_error("Unknown symbol at line " + to_string(startLine) + " column " + to_string(startColumn));
     }
 
-
-    Token readWhitespace() {
+    Token readWhitespace()
+    {
         size_t startLine = currentLine;
         size_t startColumn = currentColumn;
+        size_t start = currentPosition;
 
-        while (isspace(currentChar())) {
-            // Przesuwamy siê do kolejnego znaku
-            advance();
-        }
-        return Token{ TokenType::Whitespaces, " ", startLine, startColumn};
+        while (isspace(currentChar())) advance(); // Przesuwamy siê do kolejnego znaku
+        return Token{ TokenType::Whitespaces, " ", startLine, startColumn, start };
     }
 
 
 public:
-    
+
     Lexer(size_t maxIdentifierLength = 64, size_t maxStringLength = 1024) : maxIdentifierLength(maxIdentifierLength), maxStringLength(maxStringLength) {}
-    void loadFromString(const std::string& source) { setSource(source); } //Obsluga zrodla: ciag znakow
-    void loadFromFile(const std::string& filePath) //Obsluga zrodla: plik
+    void loadFromString(const string& source) { setSource(source); } //Obsluga zrodla: ciag znakow
+    void loadFromFile(const string& filePath) //Obsluga zrodla: plik
     {
-        std::ifstream file(filePath);
-        if (!file) throw std::runtime_error("Nieudany odczyt z pliku: " + filePath);
-        std::stringstream buffer;
+        ifstream file(filePath);
+        if (!file) throw runtime_error("Nieudany odczyt z pliku: " + filePath);
+        stringstream buffer;
         buffer << file.rdbuf();
         setSource(buffer.str());
     }
 
-    std::optional<Token> nextToken()
+    optional<Token> nextToken()
     {
-        while (currentChar() != ETX_CHAR) {
-            if (isspace(currentChar())) {
-                return readWhitespace();
-            }
-            else if (isdigit(currentChar())) {
-                return readNumber();
-            }
-            else if (isalpha(currentChar()) || currentChar() == '_') {
-                return readIdentifierOrKeyword();
-            }
-            else if (currentChar() == '"') {
-                return readString();
-            }
-            else if (currentChar() == '#') {
-                return readComment();
-            }
-            else {
-                return readSymbol();
-            }
+        while (currentChar() != ETX_CHAR)
+        {
+            if (isspace(currentChar())) return readWhitespace();
+            if (isdigit(currentChar())) return readNumber();
+            if (isalpha(currentChar()) || currentChar() == '_') return readIdentifierOrKeyword();
+            if (currentChar() == '"') return readString();
+            if (currentChar() == '#') return readComment();
+            return readSymbol();
         }
-        return std::nullopt; // Zakoñczenie pliku
+        return nullopt; // Zakoñczenie pliku
     }
 };
-
-int main() {
-    std::string sourceCode = R"(
-        def factorial(n) {
-            if (n == 0) {
-                return 1
-            } else {
-                return n * factorial(n - 1)
-            }
-        }
-
-        print("Factorial of 5 is ", factorial(5))
-        "ala ma \"kota\"\naaaaaa" "basia ma helikopter"
-        #x = 888888888333333333333333333333333333333333333333333333333333333333
-x=3y=7
-x=3y=7.222 .2
-        
-    )";
-
-    Lexer lexer(10,20);
-    lexer.loadFromString(sourceCode);
-
-    try
-    {
-        //lexer.loadFromFile("kod.txt");
-    }
-    catch (const std::runtime_error& error)
-    {
-        std::cerr << error.what() << std::endl;
-        return 1;
-    }
-        
-    std::vector<Token> tokens;
-    try
-    {
-        while (auto tokenOpt = lexer.nextToken())
-        {
-            auto token = tokenOpt.value();
-            tokens.push_back(token);
-        }
-    }
-    catch (const std::runtime_error& error)
-    {
-        std::cerr << "Blad podczas tokenizacji: " << error.what() << std::endl;
-        return 1;
-    }
-    
- 
-    std::cout << "Tokens:\n";
-    std::cout << std::left << std::setw(20) << "Type" << std::setw(10) << "Value" << "Position (Line:Column)\n";
-    std::cout << std::string(60, '-') << '\n';
-
-    for (const auto& token : tokens) {
-        std::string tokenType;
-        switch (token.type) {
-        case TokenType::IntConst: tokenType = "IntConst"; break;
-        case TokenType::DoubleConst: tokenType = "DoubleConst"; break;
-        case TokenType::BoolConst: tokenType = "BoolConst"; break;
-        case TokenType::NullConst: tokenType = "NullConst"; break;
-        case TokenType::StringConst: tokenType = "StringConst"; break;
-        case TokenType::Id: tokenType = "Id"; break;
-        case TokenType::Keyword: tokenType = "Keyword"; break;
-        case TokenType::Symbol: tokenType = "Symbol"; break;
-        case TokenType::Comment: tokenType = "Comment"; break;
-        default: tokenType = "Whitespaces";
-        }
-
-        std::string value = std::visit([](auto&& arg) -> std::string {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, std::string>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, double>) {
-                return std::to_string(arg);
-            }
-            else {
-                return "n/a";
-            }
-            }, token.value);
-
-        std::cout << std::setw(20) << tokenType << std::setw(20) << value << token.lineNumber << ":" << token.columnNumber << '\n';
-    }
-
-    return 0;
-}
