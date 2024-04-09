@@ -16,12 +16,14 @@ int main()
             if (true) return null
         }
         &&
-        print("Factorial of 5 is ", factorial(5))
+        print("Factorial of 5 is " + {factorial(5)})
         "ala ma \"kota\"\naaaaaa" "basia ma helikopter"
         #x = 888888888333333333333333333333333333333333333333333333333333333333
 x=3y=7
 x=3y=7.222 .2
 #x=8888888888
+
+print({Factorial of 5 is }, factorial(5))
         
     )";
 
@@ -41,11 +43,12 @@ x=3y=7.222 .2
     vector<Token> tokens;
     try
     {
-        while (auto tokenOpt = lexer.nextToken())
+        Token token;
+        do
         {
-            auto token = tokenOpt.value();
+            token = lexer.nextToken();
             tokens.push_back(token);
-        }
+        } while (token.type != TokenType::ETX);
     }
     catch (const runtime_error& error)
     {
@@ -74,7 +77,8 @@ x=3y=7.222 .2
         case TokenType::Keyword: tokenType = "Keyword"; break;
         case TokenType::Symbol: tokenType = "Symbol"; break;
         case TokenType::Comment: tokenType = "Comment"; break;
-        default: tokenType = "Whitespaces";
+        case TokenType::Whitespaces: tokenType = "Whitespaces"; break;
+        default: tokenType = "End of Text";
         }
 
         string value = visit([](auto&& arg) -> string {
