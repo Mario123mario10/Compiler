@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include <variant>
-#include <optional>
 #include <limits>
 #include <algorithm>
 
@@ -23,9 +22,10 @@ enum class TokenType
     Symbol,
     Comment,
     Whitespaces,
+    ETX
 };
 
-using TokenValue = variant<int, double, string, monostate>; // Dodane monostate dla tokenów bez wartoœci
+using TokenValue = variant<int, double, string>; 
 
 struct Token
 {
@@ -34,6 +34,12 @@ struct Token
     size_t lineNumber;
     size_t columnNumber;
     size_t absoluteIndex;
+};
+
+enum class KW { DEF, IF, ELSE, WHILE, BREAK, CONTINUE, RETURN, SELECT, FROM, WHERE, ORDER, BY, DESC, LIMIT };
+enum class SYM {
+    PLUS, MINUS, MULTIPLY, DIVIDE, POWER, EQUALS, NOT_EQUAL, GREATER_THAN, GREATER_EQUAL, LESS_THAN, LESS_EQUAL, AND, OR, NOT,
+    LEFT_PAR, RIGH_PAR, LEFT_BRACE, RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, ASSIGN, COMMA, COLON, DOT
 };
 
 class Lexer
@@ -46,39 +52,39 @@ private:
     size_t currentColumn = 1;
 
     const size_t maxIdentifierLength = 64;
-    const size_t maxStringLength = 1024;
+    const unsigned long long maxStringLength = 9*1e18;
 
-    map<string, int> keywordMap =
+    map<string, KW> keywordMap =
     {
-                {"def", 0},
-                {"if", 1},
-                {"else", 2},
-                {"while", 3},
-                {"break", 4},
-                {"continue", 5},
-                {"return", 6},
-                {"select", 7},
-                {"from", 8},
-                {"where", 9},
-                {"order", 10},
-                {"by", 11},
-                {"desc", 12},
-                {"limit", 13},
+                {"def", KW::DEF},
+                {"if", KW::IF},
+                {"else", KW::ELSE},
+                {"while", KW::WHILE},
+                {"break", KW::BREAK},
+                {"continue", KW::CONTINUE},
+                {"return", KW::RETURN},
+                {"select", KW::SELECT},
+                {"from", KW::FROM},
+                {"where", KW::WHERE},
+                {"order", KW::ORDER},
+                {"by", KW::BY},
+                {"desc", KW::DESC},
+                {"limit", KW::LIMIT},
     };
 
     // Mapa wszystkich symboli z ich unikalnymi numerami identyfikacyjnymi
-    map<string, int> symbols =
+    map<string, SYM> symbols =
     {
-        {"+", 1}, {"-", 2},
-        {"*", 3}, {"/", 4},
-        {"^", 5},
-        {"==", 6}, {"!=", 7}, {">", 8}, {">=", 9}, {"<", 10}, {"<=", 11},
-        {"&&", 12}, {"||", 13}, {"!", 14},
-        {"(", 15}, {")", 16},
-        {"{", 17}, {"}", 18},
-        {"[", 19}, {"]", 20},
-        {"=",21},
-        {",",22},{":",23},{".",24}
+        {"+", SYM::PLUS}, {"-", SYM::MINUS},
+        {"*", SYM::MULTIPLY}, {"/", SYM::DIVIDE},
+        {"^", SYM::POWER},
+        {"==", SYM::EQUALS}, {"!=", SYM::NOT_EQUAL}, {">", SYM::GREATER_THAN}, {">=", SYM::GREATER_EQUAL}, {"<", SYM::LESS_THAN}, {"<=", SYM::LESS_EQUAL},
+        {"&&", SYM::AND}, {"||", SYM::OR}, {"!", SYM::NOT},
+        {"(", SYM::LEFT_PAR}, {")", SYM::RIGH_PAR},
+        {"{", SYM::LEFT_BRACE}, {"}", SYM::RIGHT_BRACE},
+        {"[", SYM::LEFT_BRACKET}, {"]", SYM::RIGHT_BRACKET},
+        {"=",SYM::ASSIGN},
+        {",",SYM::COMMA},{":",SYM::COLON},{".",SYM::DOT}
     };
 
     void setSource(const string& source) { this->source = source; }
@@ -138,6 +144,7 @@ private:
             }
         }
     }
+  
 
     Token readIdentifierOrKeyword()
     {
@@ -162,7 +169,7 @@ private:
         if (auto it = keywordMap.find(identifier); it != keywordMap.end())
         {
             // Jeœli tak, zwróæ id tokenu reprezentuj¹cego s³owo kluczowe
-            return Token{ TokenType::Keyword, it->second, startLine, startColumn, start };
+            return Token{ TokenType::Keyword, static_cast<int>(it->second), startLine, startColumn, start };
         }
         else
         {
@@ -258,7 +265,7 @@ private:
         {
             currentPosition += longestMatch.length(); // Aktualizacja pozycji o d³ugoœæ znalezionego symbolu
             currentColumn += longestMatch.length(); // Aktualizacja kolumny o d³ugoœæ znalezionego symbolu
-            int symbolId = symbols[longestMatch]; // Pobranie ID symbolu
+            int symbolId = static_cast<int>(symbols[longestMatch]); // Pobranie ID symbolu
             return Token{ TokenType::Symbol, symbolId, startLine, startColumn, start };
         }
 
@@ -279,7 +286,9 @@ private:
 
 public:
 
-    Lexer(size_t maxIdentifierLength = 64, size_t maxStringLength = 1024) : maxIdentifierLength(maxIdentifierLength), maxStringLength(maxStringLength) {}
+    Lexer(size_t maxIdentifierLength = 64, unsigned long long maxStringLength = 1024) : maxIdentifierLength(maxIdentifierLength), maxStringLength(maxStringLength) {}
+    size_t getMaxIdentifierLength() { return maxIdentifierLength;  }
+    size_t getMaxStringLength() { return maxStringLength; }
     void loadFromString(const string& source) { setSource(source); } //Obsluga zrodla: ciag znakow
     void loadFromFile(const string& filePath) //Obsluga zrodla: plik
     {
@@ -290,7 +299,7 @@ public:
         setSource(buffer.str());
     }
 
-    optional<Token> nextToken()
+    Token nextToken()
     {
         while (currentChar() != ETX_CHAR)
         {
@@ -301,6 +310,7 @@ public:
             if (currentChar() == '#') return readComment();
             return readSymbol();
         }
-        return nullopt; // Zakoñczenie pliku
+        return Token{ TokenType::ETX, " "}; // Zakoñczenie pliku
     }
 };
+
