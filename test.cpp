@@ -9,17 +9,6 @@ TEST(LexerTests, TestInteger) {
     EXPECT_EQ(get<int>(token.value), 12345);
 }
 
-//def Dict() {
-//    
-//}
-//// Dict nie mo¿e byæ nazw¹ funkcji, jest zarezerwowane
-//a = Dict()
-//
-//def fun() {
-//
-//}
-//
-//a = fun()
 
 TEST(LexerTests, TestDouble) {
     Lexer lexer;
@@ -34,7 +23,7 @@ TEST(LexerTests, TestBool) {
     lexer.loadFromString("true");
     auto token = lexer.nextToken();
     EXPECT_EQ(token.type, TokenType::BoolConst);
-    EXPECT_EQ(get<int>(token.value), 1); // pobieramy ze struktury tokenu wartoœæ tokenu jako typ int
+    EXPECT_EQ(get<int>(token.value), 1); // pobieramy ze struktury tokenu wartoï¿½ï¿½ tokenu jako typ int
 }
 
 TEST(LexerTests, TestNull) {
@@ -272,7 +261,7 @@ TEST(LexerTests, TestDoubleOverflow) {
 TEST(LexerTests, TestTooLongString) {
     size_t maxStringLength = 1024, maxIdentifierLength = 64;
     Lexer lexer(maxIdentifierLength,maxStringLength);
-    string longString = "\"" + string(maxStringLength + 1, 'a') + "\""; // 1025 znaków 'a' wewn¹trz cudzys³owów
+    string longString = "\"" + string(maxStringLength + 1, 'a') + "\""; // 1025 znakï¿½w 'a' wewnï¿½trz cudzysï¿½owï¿½w
     lexer.loadFromString(longString);
     try {
         auto token = lexer.nextToken();
@@ -290,7 +279,7 @@ TEST(LexerTests, TestTooLongString) {
 TEST(LexerTests, TestLongString) {
     size_t maxStringLength = 1024, maxIdentifierLength = 64;
     Lexer lexer(maxIdentifierLength, maxStringLength);
-    string longString = "\"" + string(maxStringLength, 'a') + "\""; // 1024 znaków 'a' wewn¹trz cudzys³owów
+    string longString = "\"" + string(maxStringLength, 'a') + "\""; // 1024 znakï¿½w 'a' wewnï¿½trz cudzysï¿½owï¿½w
     lexer.loadFromString(longString);
     auto token = lexer.nextToken();
     EXPECT_EQ(token.type, TokenType::StringConst);
@@ -300,7 +289,7 @@ TEST(LexerTests, TestLongString) {
 TEST(LexerTests, TestTooLongIdentifier) {
     size_t maxStringLength = 1024, maxIdentifierLength = 64;
     Lexer lexer(maxIdentifierLength, maxStringLength);
-    string longIdentifier = string(maxIdentifierLength + 1, 'a'); // 65 znaków 'a', przekraczaj¹cych maksymaln¹ d³ugoœæ identyfikatora
+    string longIdentifier = string(maxIdentifierLength + 1, 'a'); // 65 znakï¿½w 'a', przekraczajï¿½cych maksymalnï¿½ dï¿½ugoï¿½ï¿½ identyfikatora
     lexer.loadFromString(longIdentifier);
     try {
         auto token = lexer.nextToken();
@@ -318,7 +307,7 @@ TEST(LexerTests, TestTooLongIdentifier) {
 TEST(LexerTests, TestLongIdentifier) {
     size_t maxStringLength = 1024, maxIdentifierLength = 64;
     Lexer lexer(maxIdentifierLength, maxStringLength);
-    string longIdentifier = string(maxIdentifierLength, 'a'); // 65 znaków 'a', przekraczaj¹cych maksymaln¹ d³ugoœæ identyfikatora
+    string longIdentifier = string(maxIdentifierLength, 'a'); // 65 znakï¿½w 'a', przekraczajï¿½cych maksymalnï¿½ dï¿½ugoï¿½ï¿½ identyfikatora
     lexer.loadFromString(longIdentifier);
     auto token = lexer.nextToken();
     EXPECT_EQ(token.type, TokenType::Id);
