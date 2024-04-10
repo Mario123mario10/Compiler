@@ -56,11 +56,11 @@ x          # Gramatyka na to pozwala, wtedy nic się nie dzieje
 
 |Typ        |Zmienna     |   Zakres  |
 |-----------|------------|-----------|
-|Int        |x = 10      | od -2<sup>31</sup> do 2<sup>31</sup>-1|
+|Int        |x = 10      | od -2<sup>31</sup>+1 do 2<sup>31</sup>-1|
 |Double     |y = 10.5    | od 1.7\*10<sup>-308</sup> do 1.7\*10<sup>308</sup>|
 |String     |z = "string"| do 9\*10<sup>18</sup> znaków|
 |Bool       |t = true    | true \| false |
-|Null    |m = null    | null |
+|Null       |m = null    | null |
 |Dict       |n = Dict()  | -|
 
 Dalsze szczegóły związane z typami znajdują się w dalszej części dokumentacji.
@@ -114,7 +114,7 @@ W przypadku chęci wypisania znaku klamry otwierającej lub cudzysłowu należy 
 ### Poprawny zapis printa
 
 ```
-print "" #
+print() #
 ```
 ```
 a = 6.4
@@ -122,59 +122,48 @@ b = 6.6
 c = -6.4
 d = -6.6
 
-print "{e} {f} {g} {h}" # 6 7 -6 -7
+print({e} + {f} + {g} + {h}) # 6 7 -6 -7
 ```
 ```
 a = 1
 b = 5
 c = "a"
 d = null
-print "{a}, {b}, {c}, {d}" # 1, 5, a, null
-```
-```
-a = 5
-print "\{a\} {a} \{{a}\}" # {a} 5 {5}
-```
-```
-a = 5
-print "\"\{{a}\}" # "{5}
+print({a} + {b} + {c} + {d}) # 1, 5, a, null
 ```
 
 ```
 abc = "string"
-print "{abc}" # string
+print(abc) # string
 ```
 ```
-a = 1
-b = "string"
-print "{a} \\\{{b}\" c"  # 1 \{string" c
+abc = "string\""
+print(abc) # string"
 ```
+
 ```
-def print "{a, b}"{
-    print "{a}"
+def print (a, b){
+    print(a)
 }
-print "{1, 2}" # 1
+print(1, 2) # 1 (Nie ma błędu, ponieważ jest inna liczba argumentów niż przyjmuje funkcja wbudowana print)
 ```
 
 ### Niepoprawny zapis printa
 ```
-6 print ""
+6 print()
 ```
 ```
 print
 ```
 ```
-6 + print ""
-```
-```
-print "{a\a}" # Nie można wykonać takiego escapowania. Jest to błędne wyrażenie.
+6 + print()
 ```
 
 ```
-def print "{a, b}"{  # Programista może stworzyć funkcję print, ponieważ nie jest to zajęty identyfikator
+def print(a){ # Bład zdefiniowania drugi raz funkcji o tej samej nazwie i liczbie argumentów
     return a
 }
-print "{print "{1, 2}"}" # 1
+print (1)
 ```
 
 - #### możliwość definiowania własnych funkcji (wartość do funkcji przekazywana przez wartość)
@@ -192,33 +181,33 @@ def fun(a){
 }
 
 b = fun(a)
-print "{b}" # 10
-print "{a}" # 5
+print ({b}) # 10
+print ({a}) # 5
 ```
 
 ```
 a = 5
 return a # zostanie zwrócona wartość a i zakończy się program
-print "{a}" # nie zostanie wypisana wartość a
+print ({a}) # nie zostanie wypisana wartość a
 ```
 ```
 def fun(a){
     return a # zostanie zwrócona z funkcji wartość 1
-    print "{a} + 5" # nie zostanie wypisana wartość 6
+    print ({a + 5}) # nie zostanie wypisana wartość 6
 }
-print "{fun(1)}" # 1
+print(fun(1)) # 1
 ```
 ```
 def fun(){
     return null
 }
 
-print "{fun()}" # null
+print (fun()) # null
 ```
 ```
 x = 5
 def fun(a){
-    print "{a}"
+    print ({a})
 }
 
 fun(x)     # 5
@@ -231,13 +220,13 @@ y = fun(x) # NoValueReturned: Function "fun" does not return a value in line 7, 
 def func(x)
 {
 	if(x > 10){
-        print "{x}" # 12 11
+        print(x) # 12 11
         func(x - 1)
 	}
 	return x
 }
 
-print "{func(12)}" # 12
+print({func(12)}) # 12
 ```
 
 ```
@@ -245,12 +234,12 @@ def func(x)
 {
 	if(x < 10){
 		y = func(x + 1)
-        print "{y}" # 10 9
+        print ({y}) # 10 9
 	}
 	return x
 }
 
-print "{func(8)}" # 8
+print ({func(8)}) # 8
 ```
 ```
 def func1(x){
@@ -276,7 +265,7 @@ func1(3) # true
 - #### funkcje można wywoływać z argumentami o dowolnych typach
 ```
 def fun(x){
-    print "{x}" # string
+    print ({x}) # string
 }               # 1
                 # true
                 # null
@@ -306,7 +295,7 @@ def fun1(){
 | `()`             | 8         | lewostronna      |
 | `!`              | 7         | prawostronna     |
 | `-` (unarny)     | 7         | prawostronna     |
-| `^`              | 6         | lewostronna      |
+| `^`              | 6         | prawostronna     |
 | `*`              | 5         | lewostronna      |
 | `/`              | 5         | lewostronna      |
 | `+`              | 4         | lewostronna      |
@@ -350,14 +339,14 @@ def fun1(){
 ```
 a = 6
 b = a.to_double()
-print "{b}" # 6.0
+print ({b}) # 6.0
 ```
 ```
 a = false
 b = true
 c = a.to_double()
 d = b.to_double()
-print "{c}, {d}" # 0.0, 1.0
+print ({c} + {d}) # 0.0, 1.0
 ```
 ```
 a = 6.4
@@ -370,7 +359,7 @@ f = b.to_int()
 g = c.to_int()
 h = d.to_int()
 
-print "{e} {f} {g} {h}" # 6 7 -6 -7
+print ({e} + {f} + {g} + {h}) # 6 7 -6 -7
 ```
 ```
 a = "key1"
@@ -379,7 +368,7 @@ c = "key2"
 d = 2
 dict1 = Dict(a : b, c : d)
 
-print "{dict1}" # {key1 : 1, key2 : 2}
+print ({dict1}) # {key1 : 1, key2 : 2}
 ```
 
 
@@ -442,7 +431,7 @@ a = "a
 ```
     1234567890123
 1   if {a, b}{          # UnexpectedToken: Unexpected Token "{" in line 1, column 4
-2       print "{a}"
+2       print ({a})
 3   }
 ```
 - DuplicateDefinition - ponowna definicja funkcji o tej samej nazwie (Duplicate function {name} in line {line}, column {column})
@@ -473,7 +462,7 @@ a = "a
 1    def fun(){         # MissingEndingBrace: Missing ending brace in line 1, column 10
 2        return true
 3
-4    print "{fun()}"
+4    print ({fun()})
 ```
 
 #### Interpreter
@@ -488,7 +477,7 @@ a = "a
 1   y = 5
 2   def func(x)
 3   {
-4 	    print "{y}"   # UndefinedVariable: No variable "y" in scope or not defined in line 4, column 13
+4 	    print ({y})   # UndefinedVariable: No variable "y" in scope or not defined in line 4, column 13
 5       return x * x
 6   }
 7   func(y)
@@ -499,7 +488,7 @@ a = "a
      123456789012
 1    x = "a"
 2    y = 1
-3    print "{x + y}"   # WrongType: Operation between types String and Int is not allowed in line 3, column 9
+3    print ({x + y})   # WrongType: Operation between types String and Int is not allowed in line 3, column 9
 ```
 
 - NotExactArguments - funkcja wywołana z nieprawidłową liczbą argumentów (Not exact number of arguments in line {line}, column {column})
@@ -542,7 +531,7 @@ a = "a
     1234567890123456789012345
 1   x = 5
 2   def fun(a){
-3       print "{a}"
+3       print ({a})
 4   }
 5
 6   fun(x)     # 5
@@ -582,7 +571,6 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 |                         | |   \| "break"|
 |                         | |   \| "continue"|
 |                         | |   \| return_statement|
-|                         | |   \| print_statement;|
 |assignment               |=| id, "=", expression;|
 |variable_access 		  |=| (function_call \| dict_statement \| linq_expression), {".", function_call};|
 |function_call            |=| id, ["(", [argument_list], ")"];|
@@ -591,9 +579,7 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 |while_statement          |=| "while", "(", expression, ")", block;|
 |return_statement         |=| "return ", [expression];|
 || &nbsp;||
-|print_statement          |=| "print", '"', [print_content], '"';|
-|print_content            |=| {print_text \| interpolated_value \| escaped_char};|
-|interpolated_value       |=| "{", [expression], "}";|
+|interpolated_value       |=| "{", expression, "}";|
 || &nbsp;||
 |dict_statement           |=| ["<", id, ">"], dict_argument_list;|
 |dict_argument_list       |=| "{", [dict_pair, {",", dict_pair}], "}";|
@@ -608,7 +594,8 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 |expression			      |=| or_term , {"\|\|", or_term};|
 |or_term				  |=| and_term, {"&&", and_term};|
 |and_term				  |=| comparison|
-|                         | | \| "!", "(", comparison, ")";|
+|                         | | \| "!", "(", comparison, ")" |
+|                         | | \| "!", numeric_term |
 |comparison			      |=| additive_expression, [("==" \| "!=" \| ">=" \| "<=" \| "<" \| ">"), additive_expression];|
 |additive_expression      |=| multiplicative_expression, {("+" \| "-"), multiplicative_expression};|
 |multiplicative_expression|=| factor, {("*" \| "/"), factor};|
@@ -618,6 +605,7 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 |                         | | \| bool_const|
 |                         | | \| null_const|
 |                         | | \| string_const|
+|                         | | \| interpolated_value|
 |                         | | \| "(", expression, ")"|
 |                         | | \| variable_access;|
 
@@ -625,13 +613,14 @@ Do testów akceptacyjnych użyję w szczególności fragmentów kodu zawartych w
 
 |Polecenie                | |                 Definicja|
 |-------------------------|-|---------------------------------------------------------------------------------------------------------|
-|num_const				  |=| 0\|[1-9][0-9]\*[\.[0-9]*]?      |
+|int_const                |=| 0\|[1-9][0-9]\*                 |
+|double_const		      |=| (0\|[1-9][0-9]\*)(\\.[0-9]+)?   |
 |bool_const				  |=| true\|false                     |
 |null_const               |=| null                            |
 |string_const			  |=| "[[^"]\|\\\\"]*"                |
-|print_text               |=| [^"\\{\\\\]+                    |
-|escaped_char             |=| \\\\.                           |
-|id                       |=| [A-Za-z][[A-Za-z]\|[0-9]\|_]*   |
+|id                       |=| [A-Za-z_][A-Za-z_0-9]*          |
+|symbol                   |=| [-+\*/^\(\)\{\},:\.]\|==?\|!=?\|<=?\|>=?\|&&\|\\\|\\\| |
+|comment                  |=| #[^\$]*\$                       |
 
 
 ## Podstawowe konstrukcje języka
@@ -646,67 +635,72 @@ x = 10 # tutaj jest komentarz
 #### Poprawne użycie instrukcji warunkowych
 ```
 if(2 > 1){
-    print "{10}" # 10
+    print ({10}) # 10
 }
 else{
-    print "{5}"
+    print ({5})
 }
 ```
 ```
 if(2 > 1){
     if (3 > 2){
-        print "{10}" # 10
+        print ({10}) # 10
     }
 }
 ```
 ```
 if(2 > 1 && 4 > 3){
-        print "{10}" # 10
+        print ({10}) # 10
 }
 ```
 ```
 if(2 > 1 || 4 > 3){
-        print "{10}" # 10
+        print ({10}) # 10
 }
 ```
 ```
 if(!(2 > 1)){
-    print "{10}" #
+    print ({10}) #
 }
 ```
 ```
 if(!(true)){
-    print "{10}" #
+     print ({10}) #
+}
+```
+```
+if(!true){
+     print ({10}) #
 }
 ```
 ```
 if(2 < 1){
-    print "{10}" #
+     print ({10}) #
 }
 ```
 ```
 if(2 <= 1){
-    print "{10}" #
+     print ({10}) #
 }
 ```
 ```
 if(2 > 1){
-    print "{10}" # 10
+    print ({10}) # 10
 }
 ```
 ```
 if(2 >= 1){
-    print "{10}" # 10
+    print ({10}) # 10
 }
 ```
 ```
 if(2 == 1){
-    print "{10}" #
+    print ({10}) #
 }
 ```
 ```
 if(2 != 1){
-    print "{10}" # 10
+    print ({10}) # 10
 }
 ```
 
@@ -715,38 +709,38 @@ if(2 != 1){
 #### Brak nawiasu klamrowego
 ```
 if(2 > 1){
-    if (3 > 2) print "{10}"
+    if (3 > 2) print({10})
 }
 ```
 #### Else nie odnosi się do żadnego if
 ```
 else{
-    print "{5}"
+    print ({5})
 }
 ```
 #### Napisanie warunku w instrukcji else
 ```
 if (3>2){
-    print "{10}"
+    print ({10})
 }
 else(2>1){
-    print "{5}"
+    print ({5})
 }
 ```
 #### Zanegowanie wartości nie-boolowskiej
 ```
 if (!(2)){
-    print "{5}"
+    print ({5})
 }
 ```
 ```
 if (!(0)){
-    print "{5}"
+    print ({5})
 }
 ```
 ```
 if (!(1)){
-    print "{5}"
+    print ({5})
 }
 ```
 #### Błąd porównania
@@ -755,29 +749,29 @@ x = 10;
 y = 'ABC';
 if(x > y)
 {
-    print "{1}";
+    print ({1});
 }
 ```
 
 #### Niezgodny typ w instukcji warunkowej
 ```
 if (5){
-    print "{10}"
+    print ({10})
 }
 ```
 ```
 if ("key"){
-    print "{10}"
+    print ({10})
 }
 ```
 ```
 if ("true"){
-    print "{10}"
+    print ({10})
 }
 ```
 ```
 if (Dict()){
-    print "{10}"
+    print ({10})
 }
 ```
 
@@ -786,7 +780,7 @@ if (Dict()){
 ```
 x = 7
 while(x > 0){
-    print "{x}" # 7
+    print ({x}) # 7
     x = x-3  # 4
 }            # 1
 ```
@@ -795,17 +789,17 @@ x = 10
 while(x > 0){
     y = 0
     while(y < x){
-        print "{y}"    # 0   # 0   # 0   # 0
+        print ({y})    # 0   # 0   # 0   # 0
         y = y + 8   # 8
     }
-    print "{x}"        # 10  # 7   # 4   # 1
+    print ({x})        # 10  # 7   # 4   # 1
     x = x-3
 }
 ```
 ```
 x = 10
 while(true){
-    print "{x}"  # 10
+    print ({x})  # 10
 }             # 10 ...
 ```
 ### Przykładowe błędy pętli
@@ -813,14 +807,14 @@ while(true){
 ```
 x = 10
 while(){
-    print "{x}"
+    print ({x})
     x = x-3
 }
 ```
 #### Zdefiniowanie wartości początkowej wewnątrz pętli
 ```
 while((x = 5) < 8){
-    print "{x}"
+    print ({x})
 }
 ```
 
@@ -841,12 +835,12 @@ Przydaje się kiedy nie chcemy nic zwracać z funkcji oraz przy metodach na sło
 #### Wypisywanie wartości
 ```
 x = 10
-print "{x}" # 10
+print ({x}) # 10
 ```
 #### Błąd wykonywania operacji na zmiennej typu Null (null)
 ```
 x = null
-print "{x + 2}"
+print ({x + 2})
 ```
 
 #### Konkatenacja łańcuchów znaków
@@ -854,9 +848,9 @@ print "{x + 2}"
 str1 = "poczatek "
 str2 = "koniec"
 str3 = str + str2
-print "{str3}" # poczatek koniec
-print "{str1 + str2}" # poczatek koniec
-print "{str3 == str1 + str2}" # true
+print ({str3}) # poczatek koniec
+print ({str1 + str2}) # poczatek koniec
+print ({str3 == str1 + str2}) # true
 ```
 
 ### Zakres zmiennych
@@ -876,13 +870,13 @@ mul = x * 2
 if(sum == 12)
 {
     div = x / 2
-    print "{div}" # 5
-    print "{x}" # 10
+    print ({div}) # 5
+    print ({x}) # 10
     x = 7    # modyfikacja zmiennej sprzed ifa (nie tworzymy nowej, która by ją przykryła)
 }
 
-print "{div}" # 5
-print "{x}" # 7
+print ({div}) # 5
+print ({x}) # 7
 ```
 
 #### Definiowanie własnej funkcji ze zwracaniem wartości oraz wywołanie
@@ -895,8 +889,8 @@ def func(x)
 
 y = 10
 result = func(y)
-print "{result}" # 100
-print "{func(y)}") # 100
+print ({result}) # 100
+print ({func(y)}) # 100
 
 ```
 #### Błąd zmiennej globalnej wykorzystywanej w funkcji
@@ -904,7 +898,7 @@ print "{func(y)}") # 100
 y = 5
 def func(x)
 {
-	print "{y}"   # UndefinedVariable:  No variable "y" in scope or not defined in line 4, column 11
+	print ({y})   # UndefinedVariable:  No variable "y" in scope or not defined in line 4, column 11
     return x * x
 }
 func(y)
@@ -919,10 +913,10 @@ def func(x)
 
 y = 4
 z = func(y)
-print "{y}" # 4
-print "{z}" # 9
+print ({y}) # 4
+print ({z}) # 9
 
-print "{x}" # Błąd : # UndefinedVariable:  No variable "x" in scope or not defined in line 12, column 7
+print ({x}) # Błąd : # UndefinedVariable:  No variable "x" in scope or not defined in line 12, column 7
 ```
 
 #### Mutowalność zmiennych
@@ -942,13 +936,13 @@ x = Dict()
 ```
 x = 5
 def fun(x){
-    print "{x}" # 5
+    print ({x}) # 5
     return x + 5
 }
 
-print "{x}" # 5
+print ({x}) # 5
 x = fun(x)
-print "{x}" # 10
+print ({x}) # 10
 ```
 
 ### Kolejność wykonywania działań
@@ -958,7 +952,7 @@ print "{x}" # 10
 |x = (5 / 2) + 1 * 2 |  4 |
 |y = 4 * 4 / 3 + 3 * (4 + 2) | 23|
 |z = (2 + 2) / (1 + 1) | 2|
-
+|t = 4 ^ 3 ^ 2 | 262 144 (4^9)|
 
 
 ## Słowniki
@@ -1119,7 +1113,7 @@ Kiedy w trakcie wykonywania operacji na słowniku stanie się on w pewnym momenc
 Funkcja jako argument przyjmuje klucz na takich samych zasadach jak remove.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print "{dict1.get_value(„key1”)}" # 2
+print ({dict1.get_value(„key1”)}) # 2
 ```
 
 5. exists - sprawdzanie, czy dany klucz znajduje się w słowniku
@@ -1127,7 +1121,7 @@ print "{dict1.get_value(„key1”)}" # 2
 Funkcja jako argument przyjmuje klucz na takich samych zasadach jak remove.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print "{dict1.exists(„key1”)}" # true
+print ({dict1.exists(„key1”)}) # true
 ```
 
 6.	set - zmiana wartości o podanym kluczu
@@ -1143,7 +1137,7 @@ dict1.print() # key1 : 3
 7.	size - sprawdzenie liczby elementów w słowniku
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2})
-print "{dict1.size()}" # 2
+print ({dict1.size()}) # 2
 ```
 
 8.  lower_bound - znajdowanie pierwszego niemniejszego elementu niż podany
@@ -1153,17 +1147,17 @@ Gdy znajdziemy pierwszy niemniejszy element niż podany w słowniku według funk
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print "{dict1.lower_bound(“key2”, 1)}" # key2
+print ({dict1.lower_bound(“key2”, 1)}) # key2
 ```
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print "{dict1.lower_bound(“key2”, 1)}" # key2
+print ({dict1.lower_bound(“key2”, 1)}) # key2
 ```
 
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, "key3" : 3})
-print "{dict1.lower_bound(“key4”, 1)}" # null
+print ({dict1.lower_bound(“key4”, 1)}) # null
 ```
 
 ```
@@ -1172,13 +1166,13 @@ return value1 < value2
 }
 
 dict1 = Dict(compare, {“key1” : 1, “key2” : 2, "key3" : 3})
-print "{dict1.lower_bound(“key3”, 1)}" # key1
+print ({dict1.lower_bound(“key3”, 1)}) # key1
 
 ```
 ```
 dict1 = Dict(compare, {“key1” : 1, “key2” : 2, "key3" : 3})
 a = dict1.lower_bound(“key3”, 1))
-print "{a}" # key1
+print ({a}) # key1
 ```
 
 
@@ -1187,15 +1181,15 @@ print "{a}" # key1
 Analogicznie jak funkcja lower_bound tylko zwracany jest klucz pierwszego większego elementu.
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, “key3” : 3})
-print "{dict1.upper_bound(“key2”, 1)}" # key3
+print ({dict1.upper_bound(“key2”, 1)}) # key3
 ```
 ```
 dict1 = Dict({“key1” : 1, “key3” : 3, “key4” : 4})
-print "{dict1.upper_bound(“key2”, 1)}" # key3
+print ({dict1.upper_bound(“key2”, 1)}) # key3
 ```
 ```
 dict1 = Dict({“key1” : 1, “key2” : 2, “key3” : 3})
-print "{dict1.upper_bound(“key4”, 1)}" # null
+print ({dict1.upper_bound(“key4”, 1)}) # null
 ```
 
 
@@ -1248,7 +1242,7 @@ def fun(key, value, indeks){
     }
 }
 
-print "{dict1.iterate(fun)}" # key2 : 2
+print ({dict1.iterate(fun)}) # key2 : 2
                              # key3 : 3
 ```
 
@@ -1290,7 +1284,7 @@ def sum(start, key, value){
 }
 
 results_dict = dict1.iterate(fun)
-print "{results_dict.accumulate(0, sum)}" # 5
+print ({results_dict.accumulate(0, sum)}) # 5
 ```
 
 Tak to będzie zaimplementowane mniej więcej w C++
