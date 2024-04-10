@@ -16,14 +16,12 @@ int main()
             if (true) return null
         }
         &&
-        print("Factorial of 5 is " + {factorial(5)})
+        print("Factorial of 5 is ", factorial(5))
         "ala ma \"kota\"\naaaaaa" "basia ma helikopter"
         #x = 888888888333333333333333333333333333333333333333333333333333333333
 x=3y=7
 x=3y=7.222 .2
 #x=8888888888
-
-print({Factorial of 5 is }, factorial(5))
         
     )";
 
@@ -32,7 +30,7 @@ print({Factorial of 5 is }, factorial(5))
 
     try
     {
-        //lexer.loadFromFile("kod.txt");
+        lexer.loadFromFile("kod.txt");
     }
     catch (const runtime_error& error)
     {
@@ -65,30 +63,22 @@ print({Factorial of 5 is }, factorial(5))
 
     for (const auto& token : tokens)
     {
-        string tokenType;
+        string tokenType, tokenValue;
         switch (token.type)
         {
-        case TokenType::IntConst: tokenType = "IntConst"; break;
-        case TokenType::DoubleConst: tokenType = "DoubleConst"; break;
-        case TokenType::BoolConst: tokenType = "BoolConst"; break;
+        case TokenType::IntConst: tokenType = "IntConst"; tokenValue = to_string(get<int>(token.value)); break;
+        case TokenType::DoubleConst: tokenType = "DoubleConst"; tokenValue = to_string(get<double>(token.value)); break;
+        case TokenType::BoolConst: tokenType = "BoolConst"; tokenValue = to_string(get<int>(token.value)); break;
         case TokenType::NullConst: tokenType = "NullConst"; break;
-        case TokenType::StringConst: tokenType = "StringConst"; break;
-        case TokenType::Id: tokenType = "Id"; break;
-        case TokenType::Keyword: tokenType = "Keyword"; break;
-        case TokenType::Symbol: tokenType = "Symbol"; break;
-        case TokenType::Comment: tokenType = "Comment"; break;
-        case TokenType::Whitespaces: tokenType = "Whitespaces"; break;
+        case TokenType::StringConst: tokenType = "StringConst"; tokenValue = get<string>(token.value); break;
+        case TokenType::Id: tokenType = "Id"; tokenValue = get<string>(token.value); break;
+        case TokenType::Keyword: tokenType = "Keyword"; tokenValue = to_string(get<int>(token.value)); break;
+        case TokenType::Symbol: tokenType = "Symbol"; tokenValue = to_string(get<int>(token.value)); break;
+        case TokenType::Comment: tokenType = "Comment"; tokenValue = get<string>(token.value); break;
         default: tokenType = "End of Text";
         }
 
-        string value = visit([](auto&& arg) -> string {
-            using T = decay_t<decltype(arg)>;
-            if constexpr (is_same_v<T, string>) return arg;
-            else if constexpr (is_same_v<T, int> || is_same_v<T, double>) return to_string(arg);
-            else return "n/a";
-            }, token.value);
-
-        cout << setw(20) << tokenType << setw(20) << value << token.lineNumber << ":" << token.columnNumber << '\n';
+        cout << setw(20) << tokenType << setw(20) << tokenValue << token.lineNumber << ":" << token.columnNumber << '\n';
     }
 
     return 0;
