@@ -39,7 +39,7 @@ struct Token
 enum class KW { DEF, IF, ELSE, WHILE, BREAK, CONTINUE, RETURN, SELECT, FROM, WHERE, ORDER, BY, DESC, LIMIT };
 enum class SYM {
     PLUS, MINUS, MULTIPLY, DIVIDE, POWER, EQUALS, NOT_EQUAL, GREATER_THAN, GREATER_EQUAL, LESS_THAN, LESS_EQUAL, AND, OR, NOT,
-    LEFT_PAR, RIGH_PAR, LEFT_BRACE, RIGHT_BRACE, LEFT_BRACKET, RIGHT_BRACKET, ASSIGN, COMMA, COLON, DOT
+    LEFT_PAR, RIGH_PAR, LEFT_BRACE, RIGHT_BRACE, ASSIGN, COMMA, COLON, DOT
 };
 
 class Lexer
@@ -82,7 +82,6 @@ private:
         {"&&", SYM::AND}, {"||", SYM::OR}, {"!", SYM::NOT},
         {"(", SYM::LEFT_PAR}, {")", SYM::RIGH_PAR},
         {"{", SYM::LEFT_BRACE}, {"}", SYM::RIGHT_BRACE},
-        {"[", SYM::LEFT_BRACKET}, {"]", SYM::RIGHT_BRACKET},
         {"=",SYM::ASSIGN},
         {",",SYM::COMMA},{":",SYM::COLON},{".",SYM::DOT}
     };
@@ -239,10 +238,6 @@ private:
             commentContent += currentChar();
             advance();
         }
-
-        // Nie pomijamy znaku nowej linii ('\n') na koñcu komentarza, 
-        // poniewa¿ jego obecnoœæ mo¿e byæ istotna dla innych elementów leksera,
-        // takich jak zliczanie linii.
 
         return Token{ TokenType::Comment, commentContent, startLine, startColumn, start };
     }
