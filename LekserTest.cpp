@@ -54,8 +54,6 @@ x=3y=7.222 .2
         return 1;
     }
     
-    //double value = 7.222;
-    //string = to_string(value);
 
     cout << "Tokens:\n";
     cout << left << setw(20) << "Type" << setw(10) << "Value" << "Position (Line:Column)\n";
