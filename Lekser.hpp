@@ -5,6 +5,7 @@
 #include <map>
 #include <variant>
 #include <limits>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
@@ -21,7 +22,6 @@ enum class TokenType
     Keyword,
     Symbol,
     Comment,
-    Whitespaces,
     ETX
 };
 
@@ -52,7 +52,7 @@ private:
     size_t currentColumn = 1;
 
     const size_t maxIdentifierLength = 64;
-    const unsigned long long maxStringLength = 9*1e18;
+    const size_t maxStringLength = 1024;
 
     map<string, KW> keywordMap =
     {
@@ -88,7 +88,8 @@ private:
     };
 
     void setSource(const string& source) { this->source = source; }
-    char currentChar() { return currentPosition < source.length() ? source[currentPosition] : ETX_CHAR; }
+    char charAtPos(size_t position) { return position < source.length() ? source[currentPosition] : ETX_CHAR; }
+    char currentChar() { return charAtPos(currentPosition); }
 
     void advance()
     {
@@ -103,48 +104,51 @@ private:
 
     Token readNumber()
     {
+        size_t start = currentPosition;
         size_t startLine = currentLine;
         size_t startColumn = currentColumn;
-        size_t start = currentPosition;
 
-        while (isdigit(currentChar()) || currentChar() == '.') advance();
-        string numberStr = source.substr(start, currentPosition - start);
+        bool isFloatingPoint = false;
+        double value = 0.0;
+        double decimalPlace = 1.0;
+        size_t readCharacters = 0;
 
-        size_t dots = count(numberStr.begin(), numberStr.end(), '.');
+        while (isdigit(currentChar()) || (!isFloatingPoint && currentChar() == '.'))
+        {
+            if (currentChar() == '.') isFloatingPoint = true;
+            else if (readCharacters == 1 && value == 0.0 && currentChar() == '0') //Wykrywanie liczby typu 007
+            {
+                throw runtime_error("Invalid number format with multiple leading zeros at line " + to_string(startLine) + " column " + to_string(startColumn));
+            }
+            else if (!isFloatingPoint) value = value * 10 + (currentChar() - '0');
+            else
+            {
+                decimalPlace *= 0.1;
+                value += (currentChar() - '0') * decimalPlace;
+            }
+            advance();
+            ++readCharacters;
+        }
 
-        // Check for multiple dots or invalid number format
-        if (dots > 1)
+        // Check for multiple consecutive dots or invalid number format
+        if (currentChar() == '.')
         {
             throw runtime_error("Invalid number format with multiple dots at line " + to_string(startLine) + " column " + to_string(startColumn));
         }
 
-        // Attempt to convert string to number
-        if (dots > 0)
+        if (isFloatingPoint)
         {
-            try
-            {
-                double value = stod(numberStr);
-                return Token{ TokenType::DoubleConst, value, startLine, startColumn, start };
-            }
-            catch (const out_of_range&)
-            {
-                throw runtime_error("Double value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
-            }
+            if (!isfinite(value)) throw runtime_error("Double value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
+            return Token{ TokenType::DoubleConst, value, startLine, startColumn, start };
         }
         else
         {
-            try
-            {
-                int value = stoi(numberStr);
-                return Token{ TokenType::IntConst, value, startLine, startColumn, start };
-            }
-            catch (const out_of_range&)
-            {
-                throw runtime_error("Integer value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
-            }
+            if (value > static_cast<double>(numeric_limits<int>::max())) throw runtime_error("Integer value out of range at line " + to_string(startLine) + " column " + to_string(startColumn));
+            return Token{ TokenType::IntConst, static_cast<int>(value), startLine, startColumn, start };
         }
     }
-  
+
+
 
     Token readIdentifierOrKeyword()
     {
@@ -273,20 +277,11 @@ private:
         throw runtime_error("Unknown symbol at line " + to_string(startLine) + " column " + to_string(startColumn));
     }
 
-    Token readWhitespace()
-    {
-        size_t startLine = currentLine;
-        size_t startColumn = currentColumn;
-        size_t start = currentPosition;
-
-        while (isspace(currentChar())) advance(); // Przesuwamy siê do kolejnego znaku
-        return Token{ TokenType::Whitespaces, " ", startLine, startColumn, start };
-    }
-
+    void readWhitespace() { while (isspace(currentChar())) advance(); } // Dopoki biezacy znak jest bialy, przesuwamy sie do kolejnego
 
 public:
 
-    Lexer(size_t maxIdentifierLength = 64, unsigned long long maxStringLength = 1024) : maxIdentifierLength(maxIdentifierLength), maxStringLength(maxStringLength) {}
+    Lexer(size_t maxIdentifierLength = 64, size_t maxStringLength = 1024) : maxIdentifierLength(maxIdentifierLength), maxStringLength(maxStringLength) {}
     size_t getMaxIdentifierLength() { return maxIdentifierLength;  }
     size_t getMaxStringLength() { return maxStringLength; }
     void loadFromString(const string& source) { setSource(source); } //Obsluga zrodla: ciag znakow
@@ -301,16 +296,13 @@ public:
 
     Token nextToken()
     {
-        while (currentChar() != ETX_CHAR)
-        {
-            if (isspace(currentChar())) return readWhitespace();
-            if (isdigit(currentChar())) return readNumber();
-            if (isalpha(currentChar()) || currentChar() == '_') return readIdentifierOrKeyword();
-            if (currentChar() == '"') return readString();
-            if (currentChar() == '#') return readComment();
-            return readSymbol();
-        }
-        return Token{ TokenType::ETX, " "}; // Zakoñczenie pliku
+        if (isspace(currentChar())) readWhitespace();
+
+        if (currentChar() == ETX_CHAR) return Token{ TokenType::ETX}; // Zakoñczenie pliku
+        if (isdigit(currentChar())) return readNumber();
+        if (isalpha(currentChar()) || currentChar() == '_') return readIdentifierOrKeyword();
+        if (currentChar() == '"') return readString();
+        if (currentChar() == '#') return readComment();
+        return readSymbol();
     }
 };
-
