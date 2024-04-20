@@ -2,7 +2,7 @@
 #include <iomanip> 
 #include <string>
 #include <vector>
-#include "Lekser.hpp"
+#include "Lekser.h"
 
 int main()
 {
@@ -14,6 +14,7 @@ int main()
                 return n * factorial(n - 1)
             }
             if (true) return null
+<=
         }
         &&
         print("Factorial of 5 is ", factorial(5))
@@ -25,18 +26,13 @@ x=3y=7.222 .2
         
     )";
 
-    Lexer lexer(10,20);
-    lexer.loadFromString(sourceCode);
+    string filePath = "kod.txt";
+    ifstream file(filePath, ios::in | ios::binary); //ios::binary zeby nie liczylo podwojnie nowych linii w Windows
+    if (!file.is_open()) throw runtime_error("Nieudany odczyt z pliku: " + filePath); 
 
-    try
-    {
-        lexer.loadFromFile("kod.txt");
-    }
-    catch (const runtime_error& error)
-    {
-        cerr << error.what() << endl;
-        return 1;
-    }
+    istringstream sourceString(sourceCode);
+    Lexer lexer(sourceString, 10, 20);
+    //Lexer lexer(file);
         
     vector<Token> tokens;
     try
@@ -48,12 +44,11 @@ x=3y=7.222 .2
             tokens.push_back(token);
         } while (token.type != TokenType::ETX);
     }
-    catch (const runtime_error& error)
+    catch (const Error& error)
     {
         cerr << "Blad podczas tokenizacji: " << error.what() << endl;
         return 1;
     }
-    
 
     cout << "Tokens:\n";
     cout << left << setw(20) << "Type" << setw(10) << "Value" << "Position (Line:Column)\n";
@@ -66,8 +61,8 @@ x=3y=7.222 .2
         {
         case TokenType::IntConst: tokenType = "IntConst"; tokenValue = to_string(get<int>(token.value)); break;
         case TokenType::DoubleConst: tokenType = "DoubleConst"; tokenValue = to_string(get<double>(token.value)); break;
-        case TokenType::BoolConst: tokenType = "BoolConst"; tokenValue = to_string(get<int>(token.value)); break;
-        case TokenType::NullConst: tokenType = "NullConst"; break;
+        case TokenType::TrueConst: tokenType = "TrueConst"; break;
+        case TokenType::FalseConst: tokenType = "FalseConst"; break;
         case TokenType::StringConst: tokenType = "StringConst"; tokenValue = get<string>(token.value); break;
         case TokenType::Id: tokenType = "Id"; tokenValue = get<string>(token.value); break;
         case TokenType::Keyword: tokenType = "Keyword"; tokenValue = to_string(get<int>(token.value)); break;
