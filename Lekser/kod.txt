@@ -1,0 +1,12 @@
+
+        def factorial(n) {
+            if (n == 0) {
+                return 1
+            } else {
+                return n * factorial(n - 1)
+            }
+        }
+        print("Factorial of 5 is ", factorial(5))
+        "ala ma \"kota\"\n" "basia ma helikopter"
+        #x = 888888888333333333333333333333333333333333333333333333333333333333
+    
